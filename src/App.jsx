@@ -25,6 +25,9 @@ export default function App() {
   const [fitMode, setFitMode] = useLocalStorage('mockup-fit', DEFAULT_CONFIG.fitMode);
   const [scale, setScale] = useLocalStorage('mockup-scale', DEFAULT_CONFIG.scale);
   const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [position2, setPosition2] = useState({ x: 0, y: 0 });
+  const [moveMode, setMoveMode] = useState(false); // 移动模式开关
+  const [activeDevice, setActiveDevice] = useState(1); // 当前选中的设备 1 或 2
   const [hasShadow, setHasShadow] = useLocalStorage('mockup-shadow', DEFAULT_CONFIG.hasShadow);
   const [exportRes, setExportRes] = useLocalStorage('mockup-res', DEFAULT_CONFIG.exportRes);
   const [exportRatio, setExportRatio] = useLocalStorage('mockup-ratio', EXPORT_RATIOS[0]);
@@ -153,6 +156,9 @@ export default function App() {
       setFitMode(DEFAULT_CONFIG.fitMode);
       setScale(DEFAULT_CONFIG.scale);
       setPosition({ x: 0, y: 0 });
+      setPosition2({ x: 0, y: 0 });
+      setMoveMode(false);
+      setActiveDevice(1);
       setHasShadow(DEFAULT_CONFIG.hasShadow);
       setRotateX(DEFAULT_CONFIG.rotateX);
       setRotateY(DEFAULT_CONFIG.rotateY);
@@ -238,6 +244,12 @@ export default function App() {
         setScale={setScale}
         position={position}
         setPosition={setPosition}
+        position2={position2}
+        setPosition2={setPosition2}
+        moveMode={moveMode}
+        setMoveMode={setMoveMode}
+        activeDevice={activeDevice}
+        setActiveDevice={setActiveDevice}
         hasShadow={hasShadow}
         setHasShadow={(v) => { saveHistory(); setHasShadow(v); }}
         exportRes={exportRes}
@@ -289,6 +301,12 @@ export default function App() {
         scale={scale}
         position={position}
         setPosition={setPosition}
+        position2={position2}
+        setPosition2={setPosition2}
+        moveMode={moveMode}
+        setMoveMode={setMoveMode}
+        activeDevice={activeDevice}
+        setActiveDevice={setActiveDevice}
         hasShadow={hasShadow}
         rotateX={rotateX}
         rotateY={rotateY}

@@ -16,6 +16,12 @@ const PreviewArea = forwardRef(({
   scale,
   position,
   setPosition,
+  position2,
+  setPosition2,
+  moveMode,
+  setMoveMode,
+  activeDevice,
+  setActiveDevice,
   hasShadow,
   rotateX,
   rotateY,
@@ -52,26 +58,36 @@ const PreviewArea = forwardRef(({
     return { background: background.value };
   };
 
-  // 拖拽图片位置
-  const handleMouseDown = (e) => {
-    if (isEditingText) return;
+  // 拖拽图片位置 - 只有在移动模式下才能拖动
+  const handleMouseDown = (e, deviceIndex) => {
+    if (isEditingText || !moveMode) return;
     // 阻止默认行为，防止选中文字
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(true);
     dragStart.current = { x: e.clientX, y: e.clientY };
-    posStart.current = { ...position };
+    // 根据选中的设备获取对应的位置
+    const currentPos = deviceIndex === 1 ? position : position2;
+    posStart.current = { ...currentPos };
+    setActiveDevice(deviceIndex);
   };
 
   const handleMouseMove = (e) => {
-    if (!isDragging) return;
+    if (!isDragging || !moveMode) return;
     // 考虑预览缩放和图片缩放
     const effectiveScale = scale * previewZoom;
     const dx = (e.clientX - dragStart.current.x) / effectiveScale;
     const dy = (e.clientY - dragStart.current.y) / effectiveScale;
-    setPosition({
+    const newPos = {
       x: Math.round(posStart.current.x + dx),
       y: Math.round(posStart.current.y + dy),
-    });
+    };
+    // 根据当前选中的设备更新对应的位置
+    if (activeDevice === 1) {
+      setPosition(newPos);
+    } else {
+      setPosition2(newPos);
+    }
   };
 
   const handleMouseUp = () => {
@@ -160,7 +176,7 @@ const PreviewArea = forwardRef(({
       {/* 实际导出画布 */}
       <div 
         ref={ref}
-        className={`relative shadow-2xl transition-all duration-500 overflow-hidden ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+        className={`relative shadow-2xl transition-all duration-500 overflow-hidden ${moveMode && isDragging ? 'cursor-grabbing' : moveMode ? 'cursor-grab' : 'cursor-default'}`}
         style={{
           ...getBackgroundStyle(),
           ...getCanvasStyle(),
@@ -195,11 +211,12 @@ const PreviewArea = forwardRef(({
           style={{ transformStyle: 'preserve-3d' }}
         >
           <div 
-            className="transition-transform duration-500"
+            className={`transition-transform duration-500 ${moveMode ? 'cursor-move' : ''} ${moveMode && activeDevice === 1 ? 'ring-4 ring-blue-500 ring-opacity-50 rounded-3xl' : ''}`}
             style={{ 
               transformStyle: 'preserve-3d',
               transform: layout !== 'single' ? 'translateZ(20px)' : 'none'
             }}
+            onMouseDown={(e) => handleMouseDown(e, 1)}
           >
             <DeviceFrame 
               model={model} 
@@ -218,11 +235,12 @@ const PreviewArea = forwardRef(({
           
           {(layout === 'double' || layout === 'mixed') && (
             <div 
-              className="transition-transform duration-500"
+              className={`transition-transform duration-500 ${moveMode ? 'cursor-move' : ''} ${moveMode && activeDevice === 2 ? 'ring-4 ring-blue-500 ring-opacity-50 rounded-3xl' : ''}`}
               style={{ 
                 transformStyle: 'preserve-3d',
                 transform: 'translateZ(-20px)'
               }}
+              onMouseDown={(e) => handleMouseDown(e, 2)}
             >
               <DeviceFrame 
                 model={layout === 'mixed' ? 'ipad-pro-13' : secondModel} 
@@ -230,7 +248,7 @@ const PreviewArea = forwardRef(({
                 image={secondImage} 
                 fitMode={fitMode}
                 scale={scale}
-                position={position}
+                position={position2}
                 hasShadow={hasShadow}
                 rotateX={rotateX}
                 rotateY={rotateY - 15}
@@ -256,8 +274,22 @@ const PreviewArea = forwardRef(({
 
       {/* 顶部提示 */}
       <div className={`absolute top-6 right-6 backdrop-blur px-3 py-1.5 rounded-full text-xs font-mono shadow-sm border z-20 ${isDark ? 'bg-gray-800/80 text-gray-300 border-gray-700' : 'bg-white/80 text-gray-500 border-white/50'}`}>
-        {isDragging ? '拖拽中...' : isEditingText ? '编辑文字' : `缩放: ${Math.round(previewZoom * 100)}%`}
+        {moveMode && isDragging ? `拖拽设备 ${activeDevice} 中...` : moveMode ? `移动模式 - 设备 ${activeDevice}` : isEditingText ? '编辑文字' : `缩放: ${Math.round(previewZoom * 100)}%`}
       </div>
+
+      {/* 移动模式开关按钮 */}
+      <button
+        onClick={() => setMoveMode(!moveMode)}
+        className={`absolute top-6 left-6 backdrop-blur px-4 py-2 rounded-lg text-sm font-medium shadow-sm border z-20 transition-all ${
+          moveMode 
+            ? 'bg-blue-500 text-white border-blue-600 hover:bg-blue-600' 
+            : isDark 
+              ? 'bg-gray-800/80 text-gray-300 border-gray-700 hover:bg-gray-700' 
+              : 'bg-white/80 text-gray-600 border-white/50 hover:bg-white'
+        }`}
+      >
+        {moveMode ? '✓ 移动模式开启' : '🔒 开启移动模式'}
+      </button>
 
       {/* 快捷键提示 */}
       <div className={`absolute bottom-6 left-6 backdrop-blur px-3 py-1.5 rounded-lg text-xs shadow-sm border z-20 ${isDark ? 'bg-gray-800/80 text-gray-400 border-gray-700' : 'bg-white/80 text-gray-500 border-white/50'}`}>

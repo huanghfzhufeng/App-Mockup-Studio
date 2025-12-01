@@ -29,6 +29,12 @@ export default function ControlPanel({
   setScale,
   position,
   setPosition,
+  position2,
+  setPosition2,
+  moveMode,
+  setMoveMode,
+  activeDevice,
+  setActiveDevice,
   hasShadow,
   setHasShadow,
   exportRes,
@@ -225,17 +231,63 @@ export default function ControlPanel({
                 <div className={`flex justify-between text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><span>缩放</span><span>{(scale * 100).toFixed(0)}%</span></div>
                 <input type="range" min="0.5" max="2" step="0.05" value={scale} onChange={(e) => setScale(parseFloat(e.target.value))} className="w-full accent-blue-600 h-1 rounded-lg appearance-none cursor-pointer" />
               </div>
-              <div>
-                <div className={`flex justify-between text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><span>X 偏移</span><span>{position.x}px</span></div>
-                <input type="range" min="-150" max="150" step="1" value={position.x} onChange={(e) => setPosition({...position, x: parseInt(e.target.value)})} className="w-full accent-blue-600 h-1 rounded-lg appearance-none cursor-pointer" />
+              
+              {/* 移动模式控制 */}
+              <div className={`p-2 rounded border ${moveMode ? 'border-blue-500 bg-blue-50' : (isDark ? 'border-gray-600' : 'border-gray-200')}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className={`text-xs font-medium ${isDark && !moveMode ? 'text-gray-400' : 'text-gray-600'}`}>图片位置调整</span>
+                  <button 
+                    onClick={() => setMoveMode(!moveMode)}
+                    className={`px-2 py-0.5 text-xs rounded transition-all ${moveMode ? 'bg-blue-600 text-white' : (isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-600')}`}
+                  >
+                    {moveMode ? '✓ 移动中' : '开启移动'}
+                  </button>
+                </div>
+                
+                {(layout === 'double' || layout === 'mixed') && (
+                  <div className="flex gap-1 mb-2">
+                    <button 
+                      onClick={() => setActiveDevice(1)}
+                      className={`flex-1 py-1 text-xs rounded transition-all ${activeDevice === 1 ? 'bg-blue-600 text-white' : (isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-600')}`}
+                    >
+                      设备 1
+                    </button>
+                    <button 
+                      onClick={() => setActiveDevice(2)}
+                      className={`flex-1 py-1 text-xs rounded transition-all ${activeDevice === 2 ? 'bg-blue-600 text-white' : (isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-600')}`}
+                    >
+                      设备 2
+                    </button>
+                  </div>
+                )}
+                
+                {/* 当前选中设备的位置控制 */}
+                {(() => {
+                  const currentPos = activeDevice === 1 ? position : position2;
+                  const setCurrentPos = activeDevice === 1 ? setPosition : setPosition2;
+                  return (
+                    <>
+                      <div>
+                        <div className={`flex justify-between text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                          <span>X 偏移 {(layout === 'double' || layout === 'mixed') ? `(设备${activeDevice})` : ''}</span>
+                          <span>{currentPos.x}px</span>
+                        </div>
+                        <input type="range" min="-150" max="150" step="1" value={currentPos.x} onChange={(e) => setCurrentPos({...currentPos, x: parseInt(e.target.value)})} className="w-full accent-blue-600 h-1 rounded-lg appearance-none cursor-pointer" />
+                      </div>
+                      <div>
+                        <div className={`flex justify-between text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                          <span>Y 偏移 {(layout === 'double' || layout === 'mixed') ? `(设备${activeDevice})` : ''}</span>
+                          <span>{currentPos.y}px</span>
+                        </div>
+                        <input type="range" min="-150" max="150" step="1" value={currentPos.y} onChange={(e) => setCurrentPos({...currentPos, y: parseInt(e.target.value)})} className="w-full accent-blue-600 h-1 rounded-lg appearance-none cursor-pointer" />
+                      </div>
+                      <button onClick={() => setCurrentPos({ x: 0, y: 0 })} className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 mt-1">
+                        <RotateCcw size={10} /> 重置当前设备位置
+                      </button>
+                    </>
+                  );
+                })()}
               </div>
-              <div>
-                <div className={`flex justify-between text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><span>Y 偏移</span><span>{position.y}px</span></div>
-                <input type="range" min="-150" max="150" step="1" value={position.y} onChange={(e) => setPosition({...position, y: parseInt(e.target.value)})} className="w-full accent-blue-600 h-1 rounded-lg appearance-none cursor-pointer" />
-              </div>
-              <button onClick={() => setPosition({ x: 0, y: 0 })} className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1">
-                <RotateCcw size={10} /> 重置位置
-              </button>
             </div>
           )}
         </section>
