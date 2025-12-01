@@ -1,5 +1,5 @@
 import { forwardRef, useState, useRef } from 'react';
-import { Move, Lock } from 'lucide-react';
+import { Move, Lock, ZoomIn } from 'lucide-react';
 import DeviceFrame from './DeviceFrame';
 import TextAnnotation from './TextAnnotation';
 
@@ -48,7 +48,7 @@ const PreviewArea = forwardRef(({
       return { backgroundImage: `url(${customBgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' };
     }
     if (background.type === 'custom-glass') {
-      return { background: isDark ? 'hsl(240 10% 10%)' : 'hsl(240 5% 96%)' };
+      return { background: isDark ? 'hsl(0 0% 12%)' : 'hsl(0 0% 96%)' };
     }
     if (background.id === 'custom') {
       return { backgroundColor: customBgColor };
@@ -139,7 +139,7 @@ const PreviewArea = forwardRef(({
 
   return (
     <div 
-      className="flex-1 relative overflow-hidden flex items-center justify-center p-4 md:p-10 bg-muted/30"
+      className="flex-1 relative overflow-hidden flex items-center justify-center p-6 md:p-12 bg-secondary/30"
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
@@ -149,19 +149,13 @@ const PreviewArea = forwardRef(({
       onDrop={handleDrop}
     >
       {/* 网格背景 */}
-      <div 
-        className="absolute inset-0 z-0 opacity-[0.03]" 
-        style={{ 
-          backgroundImage: 'radial-gradient(hsl(var(--foreground)) 1px, transparent 1px)', 
-          backgroundSize: '24px 24px' 
-        }}
-      />
+      <div className="absolute inset-0 z-0 grid-pattern" />
 
       {/* 拖拽上传提示 */}
       {isDragOver && (
-        <div className="absolute inset-0 z-50 bg-primary/10 border-2 border-dashed border-primary flex items-center justify-center">
-          <div className="glass px-6 py-4 rounded-xl">
-            <p className="text-base font-medium text-primary">释放以上传图片</p>
+        <div className="absolute inset-0 z-50 bg-foreground/5 border-2 border-dashed border-foreground/30 flex items-center justify-center backdrop-blur-sm">
+          <div className="glass px-8 py-5 rounded-2xl">
+            <p className="text-base font-semibold text-foreground">释放以上传图片</p>
           </div>
         </div>
       )}
@@ -169,7 +163,7 @@ const PreviewArea = forwardRef(({
       {/* 导出画布 */}
       <div 
         ref={ref}
-        className={`relative shadow-2xl transition-all duration-500 overflow-hidden rounded-lg ${moveMode && isDragging ? 'cursor-grabbing' : moveMode ? 'cursor-grab' : 'cursor-default'}`}
+        className={`relative shadow-2xl transition-all duration-500 overflow-hidden rounded-2xl ${moveMode && isDragging ? 'cursor-grabbing' : moveMode ? 'cursor-grab' : 'cursor-default'}`}
         style={{
           ...getBackgroundStyle(),
           ...getCanvasStyle(),
@@ -187,8 +181,8 @@ const PreviewArea = forwardRef(({
         {/* 磨砂玻璃特效层 */}
         {background.type === 'custom-glass' && (
           <>
-            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-400/20 to-purple-500/20 z-0" />
-            <div className="absolute inset-4 rounded-3xl bg-white/40 dark:bg-white/10 backdrop-blur-xl border border-white/50 z-0 shadow-lg" />
+            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-gray-400/10 to-gray-600/10 z-0" />
+            <div className="absolute inset-6 rounded-3xl bg-white/30 dark:bg-white/5 backdrop-blur-2xl border border-white/40 dark:border-white/10 z-0 shadow-xl" />
           </>
         )}
 
@@ -204,7 +198,7 @@ const PreviewArea = forwardRef(({
           style={{ transformStyle: 'preserve-3d' }}
         >
           <div 
-            className={`transition-transform duration-500 ${moveMode ? 'cursor-move' : ''} ${moveMode && activeDevice === 1 ? 'ring-2 ring-primary ring-offset-4 ring-offset-transparent rounded-[40px]' : ''}`}
+            className={`transition-all duration-500 ${moveMode ? 'cursor-move' : ''} ${moveMode && activeDevice === 1 ? 'ring-2 ring-foreground/50 ring-offset-4 ring-offset-transparent rounded-[44px]' : ''}`}
             style={{ 
               transformStyle: 'preserve-3d',
               transform: layout !== 'single' ? 'translateZ(20px)' : 'none'
@@ -228,7 +222,7 @@ const PreviewArea = forwardRef(({
           
           {(layout === 'double' || layout === 'mixed') && (
             <div 
-              className={`transition-transform duration-500 ${moveMode ? 'cursor-move' : ''} ${moveMode && activeDevice === 2 ? 'ring-2 ring-primary ring-offset-4 ring-offset-transparent rounded-[40px]' : ''}`}
+              className={`transition-all duration-500 ${moveMode ? 'cursor-move' : ''} ${moveMode && activeDevice === 2 ? 'ring-2 ring-foreground/50 ring-offset-4 ring-offset-transparent rounded-[44px]' : ''}`}
               style={{ 
                 transformStyle: 'preserve-3d',
                 transform: 'translateZ(-20px)'
@@ -266,26 +260,26 @@ const PreviewArea = forwardRef(({
       </div>
 
       {/* 状态提示 */}
-      <div className="absolute top-4 right-4 glass px-3 py-1.5 rounded-full text-xs font-medium z-20">
+      <div className="absolute top-5 right-5 glass px-4 py-2 rounded-xl text-xs font-medium z-20 flex items-center gap-2">
+        <ZoomIn size={12} className="text-muted-foreground" />
         {moveMode && isDragging ? `拖拽设备 ${activeDevice}` : moveMode ? `移动模式 · 设备 ${activeDevice}` : isEditingText ? '编辑文字' : `${Math.round(previewZoom * 100)}%`}
       </div>
 
       {/* 移动模式按钮 */}
       <button
         onClick={() => setMoveMode(!moveMode)}
-        className={`absolute top-4 left-4 glass px-4 py-2 rounded-lg text-sm font-medium z-20 transition-all flex items-center gap-2 ${
-          moveMode 
-            ? 'bg-primary text-primary-foreground border-primary' 
-            : 'hover:bg-accent'
-        }`}
+        className={`
+          absolute top-5 left-5 glass px-4 py-2.5 rounded-xl text-sm font-medium z-20 transition-all duration-200 flex items-center gap-2 btn-press
+          ${moveMode ? 'bg-foreground text-background border-foreground' : 'hover:bg-accent'}
+        `}
       >
         {moveMode ? <Move size={14} /> : <Lock size={14} />}
         {moveMode ? '移动模式' : '锁定'}
       </button>
 
       {/* 快捷键提示 */}
-      <div className="absolute bottom-4 left-4 glass px-3 py-1.5 rounded-lg text-xs z-20 text-muted-foreground">
-        <span className="opacity-70">Ctrl+滚轮</span> 缩放 · 
+      <div className="absolute bottom-5 left-5 glass px-4 py-2 rounded-xl text-[11px] z-20 text-muted-foreground font-medium">
+        <span className="opacity-60">Ctrl+滚轮</span> 缩放 · 
         <span className="font-mono"> Ctrl+Z/Y</span> 撤销 ·
         <span className="font-mono"> Ctrl+E</span> 导出
       </div>
