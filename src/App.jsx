@@ -236,6 +236,8 @@ export default function App() {
         setFitMode={setFitMode}
         scale={scale}
         setScale={setScale}
+        position={position}
+        setPosition={setPosition}
         hasShadow={hasShadow}
         setHasShadow={(v) => { saveHistory(); setHasShadow(v); }}
         exportRes={exportRes}

@@ -27,6 +27,8 @@ export default function ControlPanel({
   setFitMode,
   scale,
   setScale,
+  position,
+  setPosition,
   hasShadow,
   setHasShadow,
   exportRes,
@@ -223,6 +225,17 @@ export default function ControlPanel({
                 <div className={`flex justify-between text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><span>缩放</span><span>{(scale * 100).toFixed(0)}%</span></div>
                 <input type="range" min="0.5" max="2" step="0.05" value={scale} onChange={(e) => setScale(parseFloat(e.target.value))} className="w-full accent-blue-600 h-1 rounded-lg appearance-none cursor-pointer" />
               </div>
+              <div>
+                <div className={`flex justify-between text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><span>X 偏移</span><span>{position.x}px</span></div>
+                <input type="range" min="-150" max="150" step="1" value={position.x} onChange={(e) => setPosition({...position, x: parseInt(e.target.value)})} className="w-full accent-blue-600 h-1 rounded-lg appearance-none cursor-pointer" />
+              </div>
+              <div>
+                <div className={`flex justify-between text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><span>Y 偏移</span><span>{position.y}px</span></div>
+                <input type="range" min="-150" max="150" step="1" value={position.y} onChange={(e) => setPosition({...position, y: parseInt(e.target.value)})} className="w-full accent-blue-600 h-1 rounded-lg appearance-none cursor-pointer" />
+              </div>
+              <button onClick={() => setPosition({ x: 0, y: 0 })} className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                <RotateCcw size={10} /> 重置位置
+              </button>
             </div>
           )}
         </section>

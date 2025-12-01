@@ -55,6 +55,8 @@ const PreviewArea = forwardRef(({
   // 拖拽图片位置
   const handleMouseDown = (e) => {
     if (isEditingText) return;
+    // 阻止默认行为，防止选中文字
+    e.preventDefault();
     setIsDragging(true);
     dragStart.current = { x: e.clientX, y: e.clientY };
     posStart.current = { ...position };
@@ -62,11 +64,13 @@ const PreviewArea = forwardRef(({
 
   const handleMouseMove = (e) => {
     if (!isDragging) return;
-    const dx = (e.clientX - dragStart.current.x) / scale;
-    const dy = (e.clientY - dragStart.current.y) / scale;
+    // 考虑预览缩放和图片缩放
+    const effectiveScale = scale * previewZoom;
+    const dx = (e.clientX - dragStart.current.x) / effectiveScale;
+    const dy = (e.clientY - dragStart.current.y) / effectiveScale;
     setPosition({
-      x: posStart.current.x + dx,
-      y: posStart.current.y + dy,
+      x: Math.round(posStart.current.x + dx),
+      y: Math.round(posStart.current.y + dy),
     });
   };
 
