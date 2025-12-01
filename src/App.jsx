@@ -220,7 +220,7 @@ export default function App() {
   };
 
   return (
-    <div className={`min-h-screen font-sans flex flex-col md:flex-row transition-colors duration-300 ${isDark ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-800'}`}>
+    <div className={`min-h-screen font-sans flex flex-col md:flex-row transition-colors duration-300 ${isDark ? 'dark' : ''}`}>
       <ControlPanel
         screenshot={screenshot}
         screenshot2={screenshot2}

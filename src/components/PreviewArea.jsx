@@ -1,4 +1,5 @@
 import { forwardRef, useState, useRef } from 'react';
+import { Move, Lock } from 'lucide-react';
 import DeviceFrame from './DeviceFrame';
 import TextAnnotation from './TextAnnotation';
 
@@ -47,7 +48,7 @@ const PreviewArea = forwardRef(({
       return { backgroundImage: `url(${customBgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' };
     }
     if (background.type === 'custom-glass') {
-      return { background: isDark ? '#2a2a2a' : '#e5e7eb' };
+      return { background: isDark ? 'hsl(240 10% 10%)' : 'hsl(240 5% 96%)' };
     }
     if (background.id === 'custom') {
       return { backgroundColor: customBgColor };
@@ -58,15 +59,12 @@ const PreviewArea = forwardRef(({
     return { background: background.value };
   };
 
-  // 拖拽图片位置 - 只有在移动模式下才能拖动
   const handleMouseDown = (e, deviceIndex) => {
     if (isEditingText || !moveMode) return;
-    // 阻止默认行为，防止选中文字
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(true);
     dragStart.current = { x: e.clientX, y: e.clientY };
-    // 根据选中的设备获取对应的位置
     const currentPos = deviceIndex === 1 ? position : position2;
     posStart.current = { ...currentPos };
     setActiveDevice(deviceIndex);
@@ -74,7 +72,6 @@ const PreviewArea = forwardRef(({
 
   const handleMouseMove = (e) => {
     if (!isDragging || !moveMode) return;
-    // 考虑预览缩放和图片缩放
     const effectiveScale = scale * previewZoom;
     const dx = (e.clientX - dragStart.current.x) / effectiveScale;
     const dy = (e.clientY - dragStart.current.y) / effectiveScale;
@@ -82,7 +79,6 @@ const PreviewArea = forwardRef(({
       x: Math.round(posStart.current.x + dx),
       y: Math.round(posStart.current.y + dy),
     };
-    // 根据当前选中的设备更新对应的位置
     if (activeDevice === 1) {
       setPosition(newPos);
     } else {
@@ -94,7 +90,6 @@ const PreviewArea = forwardRef(({
     setIsDragging(false);
   };
 
-  // 滚轮缩放预览
   const handleWheel = (e) => {
     if (e.ctrlKey) {
       e.preventDefault();
@@ -103,7 +98,6 @@ const PreviewArea = forwardRef(({
     }
   };
 
-  // 拖拽上传
   const handleDragOver = (e) => {
     e.preventDefault();
     setIsDragOver(true);
@@ -116,7 +110,6 @@ const PreviewArea = forwardRef(({
   const handleDrop = (e) => {
     e.preventDefault();
     setIsDragOver(false);
-    
     const files = e.dataTransfer.files;
     if (files.length > 0 && files[0].type.startsWith('image/')) {
       onImageDrop?.(files[0]);
@@ -126,7 +119,6 @@ const PreviewArea = forwardRef(({
   const secondImage = screenshot2 || screenshot;
   const secondModel = model2 || model;
 
-  // 计算画布尺寸
   const getCanvasStyle = () => {
     const baseWidth = layout === 'double' || layout === 'mixed' ? 900 : 600;
     const baseHeight = 900;
@@ -147,7 +139,7 @@ const PreviewArea = forwardRef(({
 
   return (
     <div 
-      className={`flex-1 relative overflow-hidden flex items-center justify-center p-4 md:p-10 transition-colors duration-300 ${isDark ? 'bg-gray-900' : 'bg-[#e5e5e5]'}`}
+      className="flex-1 relative overflow-hidden flex items-center justify-center p-4 md:p-10 bg-muted/30"
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
@@ -156,27 +148,28 @@ const PreviewArea = forwardRef(({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      {/* 棋盘格背景 */}
-      <div className="absolute inset-0 z-0 opacity-10" 
-           style={{ 
-             backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', 
-             backgroundSize: '20px 20px' 
-           }}>
-      </div>
+      {/* 网格背景 */}
+      <div 
+        className="absolute inset-0 z-0 opacity-[0.03]" 
+        style={{ 
+          backgroundImage: 'radial-gradient(hsl(var(--foreground)) 1px, transparent 1px)', 
+          backgroundSize: '24px 24px' 
+        }}
+      />
 
       {/* 拖拽上传提示 */}
       {isDragOver && (
-        <div className="absolute inset-0 z-50 bg-blue-500/20 border-4 border-dashed border-blue-500 flex items-center justify-center">
-          <div className="bg-white dark:bg-gray-800 px-6 py-4 rounded-xl shadow-lg">
-            <p className="text-lg font-medium text-blue-600">释放以上传图片</p>
+        <div className="absolute inset-0 z-50 bg-primary/10 border-2 border-dashed border-primary flex items-center justify-center">
+          <div className="glass px-6 py-4 rounded-xl">
+            <p className="text-base font-medium text-primary">释放以上传图片</p>
           </div>
         </div>
       )}
 
-      {/* 实际导出画布 */}
+      {/* 导出画布 */}
       <div 
         ref={ref}
-        className={`relative shadow-2xl transition-all duration-500 overflow-hidden ${moveMode && isDragging ? 'cursor-grabbing' : moveMode ? 'cursor-grab' : 'cursor-default'}`}
+        className={`relative shadow-2xl transition-all duration-500 overflow-hidden rounded-lg ${moveMode && isDragging ? 'cursor-grabbing' : moveMode ? 'cursor-grab' : 'cursor-default'}`}
         style={{
           ...getBackgroundStyle(),
           ...getCanvasStyle(),
@@ -194,8 +187,8 @@ const PreviewArea = forwardRef(({
         {/* 磨砂玻璃特效层 */}
         {background.type === 'custom-glass' && (
           <>
-            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-400/20 to-purple-500/20 z-0"></div>
-            <div className="absolute inset-4 rounded-3xl bg-white/40 backdrop-blur-xl border border-white/50 z-0 shadow-lg"></div>
+            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-400/20 to-purple-500/20 z-0" />
+            <div className="absolute inset-4 rounded-3xl bg-white/40 dark:bg-white/10 backdrop-blur-xl border border-white/50 z-0 shadow-lg" />
           </>
         )}
 
@@ -211,7 +204,7 @@ const PreviewArea = forwardRef(({
           style={{ transformStyle: 'preserve-3d' }}
         >
           <div 
-            className={`transition-transform duration-500 ${moveMode ? 'cursor-move' : ''} ${moveMode && activeDevice === 1 ? 'ring-4 ring-blue-500 ring-opacity-50 rounded-3xl' : ''}`}
+            className={`transition-transform duration-500 ${moveMode ? 'cursor-move' : ''} ${moveMode && activeDevice === 1 ? 'ring-2 ring-primary ring-offset-4 ring-offset-transparent rounded-[40px]' : ''}`}
             style={{ 
               transformStyle: 'preserve-3d',
               transform: layout !== 'single' ? 'translateZ(20px)' : 'none'
@@ -235,7 +228,7 @@ const PreviewArea = forwardRef(({
           
           {(layout === 'double' || layout === 'mixed') && (
             <div 
-              className={`transition-transform duration-500 ${moveMode ? 'cursor-move' : ''} ${moveMode && activeDevice === 2 ? 'ring-4 ring-blue-500 ring-opacity-50 rounded-3xl' : ''}`}
+              className={`transition-transform duration-500 ${moveMode ? 'cursor-move' : ''} ${moveMode && activeDevice === 2 ? 'ring-2 ring-primary ring-offset-4 ring-offset-transparent rounded-[40px]' : ''}`}
               style={{ 
                 transformStyle: 'preserve-3d',
                 transform: 'translateZ(-20px)'
@@ -259,12 +252,12 @@ const PreviewArea = forwardRef(({
           )}
         </div>
 
-        {/* 自定义水印 */}
+        {/* 水印 */}
         {watermark.visible && (
           <div 
             className="absolute bottom-6 right-6 font-bold text-xl select-none pointer-events-none"
             style={{ 
-              color: isDark ? 'rgba(255,255,255,' + watermark.opacity + ')' : 'rgba(0,0,0,' + watermark.opacity + ')'
+              color: isDark ? `rgba(255,255,255,${watermark.opacity})` : `rgba(0,0,0,${watermark.opacity})`
             }}
           >
             {watermark.text}
@@ -272,29 +265,28 @@ const PreviewArea = forwardRef(({
         )}
       </div>
 
-      {/* 顶部提示 */}
-      <div className={`absolute top-6 right-6 backdrop-blur px-3 py-1.5 rounded-full text-xs font-mono shadow-sm border z-20 ${isDark ? 'bg-gray-800/80 text-gray-300 border-gray-700' : 'bg-white/80 text-gray-500 border-white/50'}`}>
-        {moveMode && isDragging ? `拖拽设备 ${activeDevice} 中...` : moveMode ? `移动模式 - 设备 ${activeDevice}` : isEditingText ? '编辑文字' : `缩放: ${Math.round(previewZoom * 100)}%`}
+      {/* 状态提示 */}
+      <div className="absolute top-4 right-4 glass px-3 py-1.5 rounded-full text-xs font-medium z-20">
+        {moveMode && isDragging ? `拖拽设备 ${activeDevice}` : moveMode ? `移动模式 · 设备 ${activeDevice}` : isEditingText ? '编辑文字' : `${Math.round(previewZoom * 100)}%`}
       </div>
 
-      {/* 移动模式开关按钮 */}
+      {/* 移动模式按钮 */}
       <button
         onClick={() => setMoveMode(!moveMode)}
-        className={`absolute top-6 left-6 backdrop-blur px-4 py-2 rounded-lg text-sm font-medium shadow-sm border z-20 transition-all ${
+        className={`absolute top-4 left-4 glass px-4 py-2 rounded-lg text-sm font-medium z-20 transition-all flex items-center gap-2 ${
           moveMode 
-            ? 'bg-blue-500 text-white border-blue-600 hover:bg-blue-600' 
-            : isDark 
-              ? 'bg-gray-800/80 text-gray-300 border-gray-700 hover:bg-gray-700' 
-              : 'bg-white/80 text-gray-600 border-white/50 hover:bg-white'
+            ? 'bg-primary text-primary-foreground border-primary' 
+            : 'hover:bg-accent'
         }`}
       >
-        {moveMode ? '✓ 移动模式开启' : '🔒 开启移动模式'}
+        {moveMode ? <Move size={14} /> : <Lock size={14} />}
+        {moveMode ? '移动模式' : '锁定'}
       </button>
 
       {/* 快捷键提示 */}
-      <div className={`absolute bottom-6 left-6 backdrop-blur px-3 py-1.5 rounded-lg text-xs shadow-sm border z-20 ${isDark ? 'bg-gray-800/80 text-gray-400 border-gray-700' : 'bg-white/80 text-gray-500 border-white/50'}`}>
-        <span className="opacity-70">Ctrl+滚轮</span> 缩放 | 
-        <span className="font-mono"> Ctrl+Z/Y</span> 撤销/重做 |
+      <div className="absolute bottom-4 left-4 glass px-3 py-1.5 rounded-lg text-xs z-20 text-muted-foreground">
+        <span className="opacity-70">Ctrl+滚轮</span> 缩放 · 
+        <span className="font-mono"> Ctrl+Z/Y</span> 撤销 ·
         <span className="font-mono"> Ctrl+E</span> 导出
       </div>
     </div>

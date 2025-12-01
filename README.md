@@ -1,4 +1,4 @@
-# App Mockup Studio
+# SnapShell
 
 🎨 一款在线 App 截图 Mockup 生成工具，让产品截图更有质感。
 
