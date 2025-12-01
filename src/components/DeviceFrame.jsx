@@ -1,7 +1,19 @@
 import { Smartphone, Tablet } from 'lucide-react';
 import { DEVICE_MODELS } from '../config/constants';
 
-export default function DeviceFrame({ model, color, image, fitMode, position, scale, hasShadow, rotateX = 0, rotateY = 0 }) {
+export default function DeviceFrame({ 
+  model, 
+  color, 
+  image, 
+  fitMode, 
+  position, 
+  scale, 
+  hasShadow, 
+  rotateX = 0, 
+  rotateY = 0,
+  isLandscape = false,
+  enableAnimation = false
+}) {
   const config = DEVICE_MODELS[model];
   const frameHex = config.frameColor[color] || Object.values(config.frameColor)[0];
   const isTablet = model.includes('ipad');
@@ -10,12 +22,16 @@ export default function DeviceFrame({ model, color, image, fitMode, position, sc
   const baseWidth = isTablet ? 380 : 320;
   const deviceHeight = baseWidth / config.ratio;
 
+  // 横屏时交换宽高
+  const finalWidth = isLandscape ? deviceHeight : baseWidth;
+  const finalHeight = isLandscape ? baseWidth : deviceHeight;
+
   return (
     <div 
-      className="relative select-none transition-all duration-300"
+      className={`relative select-none transition-all duration-500 ${enableAnimation ? 'animate-float' : ''}`}
       style={{
-        width: `${baseWidth}px`, 
-        height: `${deviceHeight}px`,
+        width: `${finalWidth}px`, 
+        height: `${finalHeight}px`,
         borderRadius: `${config.cornerRadius}px`,
         backgroundColor: frameHex,
         boxShadow: hasShadow 
@@ -35,13 +51,21 @@ export default function DeviceFrame({ model, color, image, fitMode, position, sc
         }}
       />
       
-      {/* 物理按键 - 仅手机显示 */}
-      {!isTablet && (
+      {/* 物理按键 - 根据横竖屏调整位置 */}
+      {!isTablet && !isLandscape && (
         <>
           <div className="absolute -left-[3px] top-[100px] w-[3px] h-[30px] rounded-l bg-gray-400 opacity-80" style={{ transform: 'translateZ(2px)' }}></div>
           <div className="absolute -left-[3px] top-[150px] w-[3px] h-[50px] rounded-l bg-gray-400 opacity-80" style={{ transform: 'translateZ(2px)' }}></div>
           <div className="absolute -left-[3px] top-[210px] w-[3px] h-[50px] rounded-l bg-gray-400 opacity-80" style={{ transform: 'translateZ(2px)' }}></div>
           <div className="absolute -right-[3px] top-[150px] w-[3px] h-[80px] rounded-r bg-gray-400 opacity-80" style={{ transform: 'translateZ(2px)' }}></div>
+        </>
+      )}
+
+      {!isTablet && isLandscape && (
+        <>
+          <div className="absolute -top-[3px] left-[100px] h-[3px] w-[30px] rounded-t bg-gray-400 opacity-80" style={{ transform: 'translateZ(2px)' }}></div>
+          <div className="absolute -top-[3px] left-[150px] h-[3px] w-[50px] rounded-t bg-gray-400 opacity-80" style={{ transform: 'translateZ(2px)' }}></div>
+          <div className="absolute -bottom-[3px] left-[150px] h-[3px] w-[80px] rounded-b bg-gray-400 opacity-80" style={{ transform: 'translateZ(2px)' }}></div>
         </>
       )}
 
@@ -55,7 +79,7 @@ export default function DeviceFrame({ model, color, image, fitMode, position, sc
 
       {/* 屏幕区域 */}
       <div 
-        className="absolute overflow-hidden bg-black"
+        className="absolute overflow-hidden bg-black transition-all duration-300"
         style={{
           top: `${config.bezelWidth}px`,
           left: `${config.bezelWidth}px`,
@@ -73,7 +97,7 @@ export default function DeviceFrame({ model, color, image, fitMode, position, sc
               className="absolute w-full h-full transition-transform duration-200"
               style={{
                 objectFit: fitMode,
-                transform: `scale(${scale}) translate(${position.x}px, ${position.y}px)`
+                transform: `scale(${scale}) translate(${position.x}px, ${position.y}px)`,
               }}
             />
           </div>
@@ -93,8 +117,8 @@ export default function DeviceFrame({ model, color, image, fitMode, position, sc
         ></div>
       </div>
 
-      {/* 灵动岛 / 挖孔 */}
-      {config.islandType === 'dynamic-island' && (
+      {/* 灵动岛 / 挖孔 - 根据横竖屏调整 */}
+      {config.islandType === 'dynamic-island' && !isLandscape && (
         <div className="absolute top-[20px] left-1/2 -translate-x-1/2 z-30 pointer-events-none" style={{ transform: 'translateX(-50%) translateZ(2px)' }}>
           <div 
             className="bg-black rounded-full flex items-center justify-center"
@@ -107,10 +131,20 @@ export default function DeviceFrame({ model, color, image, fitMode, position, sc
         </div>
       )}
 
+      {config.islandType === 'dynamic-island' && isLandscape && (
+        <div className="absolute left-[20px] top-1/2 -translate-y-1/2 z-30 pointer-events-none" style={{ transform: 'translateY(-50%) translateZ(2px)' }}>
+          <div 
+            className="bg-black rounded-full flex items-center justify-center"
+            style={{ width: '28px', height: `${config.islandWidth}px` }}
+          >
+          </div>
+        </div>
+      )}
+
       {config.islandType === 'punch-hole' && (
         <div 
-          className="absolute top-[16px] left-1/2 -translate-x-1/2 z-30 pointer-events-none"
-          style={{ transform: 'translateX(-50%) translateZ(2px)' }}
+          className={`absolute z-30 pointer-events-none ${isLandscape ? 'left-[16px] top-1/2 -translate-y-1/2' : 'top-[16px] left-1/2 -translate-x-1/2'}`}
+          style={{ transform: isLandscape ? 'translateY(-50%) translateZ(2px)' : 'translateX(-50%) translateZ(2px)' }}
         >
           <div className="w-3 h-3 rounded-full bg-black border border-gray-800"></div>
         </div>

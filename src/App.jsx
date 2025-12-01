@@ -1,43 +1,94 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import ControlPanel from './components/ControlPanel';
 import PreviewArea from './components/PreviewArea';
-import { useExport, EXPORT_RATIOS } from './hooks/useExport';
+import { useExport } from './hooks/useExport';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useKeyboard } from './hooks/useKeyboard';
 import { useTemplates } from './hooks/useTemplates';
-import { BACKGROUNDS, DEFAULT_TEXT_ANNOTATION, EXPORT_RATIOS as CONFIG_RATIOS } from './config/constants';
+import { useDarkMode } from './hooks/useDarkMode';
+import { useHistory } from './hooks/useHistory';
+import { BACKGROUNDS, DEFAULT_TEXT_ANNOTATION, EXPORT_RATIOS, DEFAULT_CONFIG } from './config/constants';
 
 export default function App() {
   // 图片状态
   const [screenshot, setScreenshot] = useState(null);
   const [screenshot2, setScreenshot2] = useState(null);
+  const [customBgImage, setCustomBgImage] = useState(null);
   const [isExporting, setIsExporting] = useState(false);
-  
-  // 使用本地存储保存配置
-  const [model, setModel] = useLocalStorage('mockup-model', 'iphone-16');
-  const [deviceColor, setDeviceColor] = useLocalStorage('mockup-color', 'black');
+
+  // 配置状态（本地存储）
+  const [model, setModel] = useLocalStorage('mockup-model', DEFAULT_CONFIG.model);
+  const [deviceColor, setDeviceColor] = useLocalStorage('mockup-color', DEFAULT_CONFIG.deviceColor);
   const [background, setBackground] = useLocalStorage('mockup-bg', BACKGROUNDS[0]);
   const [customBgColor, setCustomBgColor] = useLocalStorage('mockup-custom-bg', '#ffffff');
-  const [layout, setLayout] = useLocalStorage('mockup-layout', 'single');
-  const [fitMode, setFitMode] = useLocalStorage('mockup-fit', 'cover');
-  const [scale, setScale] = useLocalStorage('mockup-scale', 1);
+  const [layout, setLayout] = useLocalStorage('mockup-layout', DEFAULT_CONFIG.layout);
+  const [fitMode, setFitMode] = useLocalStorage('mockup-fit', DEFAULT_CONFIG.fitMode);
+  const [scale, setScale] = useLocalStorage('mockup-scale', DEFAULT_CONFIG.scale);
   const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [hasShadow, setHasShadow] = useLocalStorage('mockup-shadow', true);
-  const [exportRes, setExportRes] = useLocalStorage('mockup-res', 2);
-  const [exportRatio, setExportRatio] = useLocalStorage('mockup-ratio', CONFIG_RATIOS[0]);
-  
-  // 3D 效果状态
-  const [rotateX, setRotateX] = useLocalStorage('mockup-rx', 0);
-  const [rotateY, setRotateY] = useLocalStorage('mockup-ry', 0);
-  const [perspective, setPerspective] = useLocalStorage('mockup-persp', 1000);
+  const [hasShadow, setHasShadow] = useLocalStorage('mockup-shadow', DEFAULT_CONFIG.hasShadow);
+  const [exportRes, setExportRes] = useLocalStorage('mockup-res', DEFAULT_CONFIG.exportRes);
+  const [exportRatio, setExportRatio] = useLocalStorage('mockup-ratio', EXPORT_RATIOS[0]);
+
+  // 3D 效果
+  const [rotateX, setRotateX] = useLocalStorage('mockup-rx', DEFAULT_CONFIG.rotateX);
+  const [rotateY, setRotateY] = useLocalStorage('mockup-ry', DEFAULT_CONFIG.rotateY);
+  const [perspective, setPerspective] = useLocalStorage('mockup-persp', DEFAULT_CONFIG.perspective);
+
+  // 新功能
+  const [isLandscape, setIsLandscape] = useLocalStorage('mockup-landscape', DEFAULT_CONFIG.isLandscape);
+  const [enableAnimation, setEnableAnimation] = useLocalStorage('mockup-animation', false);
+  const [watermark, setWatermark] = useLocalStorage('mockup-watermark', DEFAULT_CONFIG.watermark);
 
   // 文字标注
   const [annotation, setAnnotation] = useLocalStorage('mockup-annotation', DEFAULT_TEXT_ANNOTATION);
   const [isEditingText, setIsEditingText] = useState(false);
 
+  // 暗色模式
+  const { isDark, toggle: toggleDark } = useDarkMode();
+
+  // 历史记录
+  const { pushState, undo, redo, canUndo, canRedo } = useHistory({
+    model, deviceColor, layout, rotateX, rotateY, perspective, hasShadow, isLandscape
+  });
+
   const previewRef = useRef(null);
-  const { exportImage, batchExport } = useExport();
+  const { exportImage } = useExport();
   const { templates, saveTemplate, deleteTemplate } = useTemplates();
+
+  // 保存历史状态
+  const saveHistory = useCallback(() => {
+    pushState({ model, deviceColor, layout, rotateX, rotateY, perspective, hasShadow, isLandscape });
+  }, [model, deviceColor, layout, rotateX, rotateY, perspective, hasShadow, isLandscape, pushState]);
+
+  // 撤销
+  const handleUndo = useCallback(() => {
+    const state = undo();
+    if (state) {
+      setModel(state.model);
+      setDeviceColor(state.deviceColor);
+      setLayout(state.layout);
+      setRotateX(state.rotateX);
+      setRotateY(state.rotateY);
+      setPerspective(state.perspective);
+      setHasShadow(state.hasShadow);
+      setIsLandscape(state.isLandscape);
+    }
+  }, [undo, setModel, setDeviceColor, setLayout, setRotateX, setRotateY, setPerspective, setHasShadow, setIsLandscape]);
+
+  // 重做
+  const handleRedo = useCallback(() => {
+    const state = redo();
+    if (state) {
+      setModel(state.model);
+      setDeviceColor(state.deviceColor);
+      setLayout(state.layout);
+      setRotateX(state.rotateX);
+      setRotateY(state.rotateY);
+      setPerspective(state.perspective);
+      setHasShadow(state.hasShadow);
+      setIsLandscape(state.isLandscape);
+    }
+  }, [redo, setModel, setDeviceColor, setLayout, setRotateX, setRotateY, setPerspective, setHasShadow, setIsLandscape]);
 
   // 图片上传
   const handleImageUpload = (e) => {
@@ -58,6 +109,22 @@ export default function App() {
     }
   };
 
+  const handleBgImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => setCustomBgImage(event.target.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // 拖拽上传
+  const handleImageDrop = (file) => {
+    const reader = new FileReader();
+    reader.onload = (event) => setScreenshot(event.target.result);
+    reader.readAsDataURL(file);
+  };
+
   // 导出
   const handleExport = async () => {
     setIsExporting(true);
@@ -69,12 +136,33 @@ export default function App() {
   // 批量导出
   const handleBatchExport = async () => {
     setIsExporting(true);
-    const ratiosToExport = CONFIG_RATIOS.filter(r => r.ratio !== null);
+    const ratiosToExport = EXPORT_RATIOS.filter(r => r.ratio !== null);
     for (const ratio of ratiosToExport) {
       await exportImage(previewRef, exportRes, ratio.ratio);
       await new Promise(r => setTimeout(r, 800));
     }
     setIsExporting(false);
+  };
+
+  // 重置所有设置
+  const handleReset = () => {
+    if (confirm('确定要重置所有设置吗？')) {
+      setModel(DEFAULT_CONFIG.model);
+      setDeviceColor(DEFAULT_CONFIG.deviceColor);
+      setLayout(DEFAULT_CONFIG.layout);
+      setFitMode(DEFAULT_CONFIG.fitMode);
+      setScale(DEFAULT_CONFIG.scale);
+      setPosition({ x: 0, y: 0 });
+      setHasShadow(DEFAULT_CONFIG.hasShadow);
+      setRotateX(DEFAULT_CONFIG.rotateX);
+      setRotateY(DEFAULT_CONFIG.rotateY);
+      setPerspective(DEFAULT_CONFIG.perspective);
+      setIsLandscape(DEFAULT_CONFIG.isLandscape);
+      setWatermark(DEFAULT_CONFIG.watermark);
+      setBackground(BACKGROUNDS[0]);
+      setAnnotation(DEFAULT_TEXT_ANNOTATION);
+      setCustomBgImage(null);
+    }
   };
 
   // 键盘快捷键
@@ -86,21 +174,32 @@ export default function App() {
     rotateY,
   });
 
+  // Ctrl+Z/Y 快捷键
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.ctrlKey && e.key === 'z') {
+        e.preventDefault();
+        handleUndo();
+      }
+      if (e.ctrlKey && e.key === 'y') {
+        e.preventDefault();
+        handleRedo();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleUndo, handleRedo]);
+
   // 模板操作
   const handleSaveTemplate = (name) => {
     saveTemplate(name, {
-      model,
-      deviceColor,
-      backgroundId: background.id,
-      layout,
-      rotateX,
-      rotateY,
-      perspective,
-      hasShadow,
+      model, deviceColor, backgroundId: background.id, layout,
+      rotateX, rotateY, perspective, hasShadow, isLandscape
     });
   };
 
   const handleApplyTemplate = (template) => {
+    saveHistory();
     const { config } = template;
     setModel(config.model);
     setDeviceColor(config.deviceColor);
@@ -109,37 +208,36 @@ export default function App() {
     setRotateY(config.rotateY);
     setPerspective(config.perspective);
     setHasShadow(config.hasShadow);
-    
-    // 查找背景
+    if (config.isLandscape !== undefined) setIsLandscape(config.isLandscape);
     const bg = BACKGROUNDS.find(b => b.id === config.backgroundId);
     if (bg) setBackground(bg);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-800 font-sans flex flex-col md:flex-row">
+    <div className={`min-h-screen font-sans flex flex-col md:flex-row transition-colors duration-300 ${isDark ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-800'}`}>
       <ControlPanel
         screenshot={screenshot}
         screenshot2={screenshot2}
         onImageUpload={handleImageUpload}
         onImageUpload2={handleImageUpload2}
+        onBgImageUpload={handleBgImageUpload}
         model={model}
-        setModel={setModel}
+        setModel={(v) => { saveHistory(); setModel(v); }}
         deviceColor={deviceColor}
-        setDeviceColor={setDeviceColor}
+        setDeviceColor={(v) => { saveHistory(); setDeviceColor(v); }}
         background={background}
         setBackground={setBackground}
         customBgColor={customBgColor}
         setCustomBgColor={setCustomBgColor}
+        customBgImage={customBgImage}
         layout={layout}
-        setLayout={setLayout}
+        setLayout={(v) => { saveHistory(); setLayout(v); }}
         fitMode={fitMode}
         setFitMode={setFitMode}
         scale={scale}
         setScale={setScale}
-        position={position}
-        setPosition={setPosition}
         hasShadow={hasShadow}
-        setHasShadow={setHasShadow}
+        setHasShadow={(v) => { saveHistory(); setHasShadow(v); }}
         exportRes={exportRes}
         setExportRes={setExportRes}
         exportRatio={exportRatio}
@@ -148,9 +246,9 @@ export default function App() {
         onBatchExport={handleBatchExport}
         isExporting={isExporting}
         rotateX={rotateX}
-        setRotateX={setRotateX}
+        setRotateX={(v) => { saveHistory(); setRotateX(v); }}
         rotateY={rotateY}
-        setRotateY={setRotateY}
+        setRotateY={(v) => { saveHistory(); setRotateY(v); }}
         perspective={perspective}
         setPerspective={setPerspective}
         annotation={annotation}
@@ -161,11 +259,25 @@ export default function App() {
         onSaveTemplate={handleSaveTemplate}
         onApplyTemplate={handleApplyTemplate}
         onDeleteTemplate={deleteTemplate}
+        isLandscape={isLandscape}
+        setIsLandscape={(v) => { saveHistory(); setIsLandscape(v); }}
+        enableAnimation={enableAnimation}
+        setEnableAnimation={setEnableAnimation}
+        watermark={watermark}
+        setWatermark={setWatermark}
+        isDark={isDark}
+        toggleDark={toggleDark}
+        onReset={handleReset}
+        canUndo={canUndo}
+        canRedo={canRedo}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
       />
       <PreviewArea
         ref={previewRef}
         background={background}
         customBgColor={customBgColor}
+        customBgImage={customBgImage}
         layout={layout}
         model={model}
         deviceColor={deviceColor}
@@ -183,6 +295,11 @@ export default function App() {
         setAnnotation={setAnnotation}
         isEditingText={isEditingText}
         exportRatio={exportRatio}
+        isLandscape={isLandscape}
+        enableAnimation={enableAnimation}
+        watermark={watermark}
+        onImageDrop={handleImageDrop}
+        isDark={isDark}
       />
     </div>
   );

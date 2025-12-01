@@ -260,3 +260,30 @@ export const DEFAULT_TEXT_ANNOTATION = {
     visible: false,
   }
 };
+
+// 默认配置（用于重置）
+export const DEFAULT_CONFIG = {
+  model: 'iphone-16',
+  deviceColor: 'black',
+  layout: 'single',
+  fitMode: 'cover',
+  scale: 1,
+  hasShadow: true,
+  rotateX: 0,
+  rotateY: 0,
+  perspective: 1000,
+  exportRes: 2,
+  isLandscape: false,
+  watermark: {
+    visible: true,
+    text: 'MOCKUP',
+    opacity: 0.1,
+  },
+};
+
+// 布局模式
+export const LAYOUT_MODES = [
+  { id: 'single', name: '单设备', icon: '📱' },
+  { id: 'double', name: '双展示', icon: '📱📱' },
+  { id: 'mixed', name: '混合', icon: '📱💻' },
+];
