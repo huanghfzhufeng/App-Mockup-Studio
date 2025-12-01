@@ -3,7 +3,7 @@ import {
   Upload, Download, Smartphone, Layout, Palette, Image as ImageIcon, 
   Box, RotateCcw, Type, Save, Layers, Ratio
 } from 'lucide-react';
-import { BACKGROUNDS, DEVICE_MODELS, PRESET_ANGLES, EXPORT_RATIOS } from '../config/constants';
+import { BACKGROUNDS, DEVICE_MODELS, PRESET_ANGLES, EXPORT_RATIOS, FONT_STYLES } from '../config/constants';
 
 export default function ControlPanel({
   screenshot,
@@ -363,12 +363,12 @@ export default function ControlPanel({
                   placeholder="输入标题"
                   className="w-full text-sm px-2 py-1 border border-gray-200 rounded"
                 />
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <input
                     type="number"
                     value={annotation.title.fontSize}
                     onChange={(e) => updateAnnotation('title', 'fontSize', parseInt(e.target.value))}
-                    className="w-16 text-xs px-2 py-1 border border-gray-200 rounded"
+                    className="w-14 text-xs px-2 py-1 border border-gray-200 rounded"
                     min="12"
                     max="120"
                   />
@@ -381,11 +381,26 @@ export default function ControlPanel({
                   <select
                     value={annotation.title.fontWeight}
                     onChange={(e) => updateAnnotation('title', 'fontWeight', e.target.value)}
-                    className="text-xs px-2 py-1 border border-gray-200 rounded"
+                    className="text-xs px-1 py-1 border border-gray-200 rounded"
                   >
                     <option value="normal">常规</option>
                     <option value="bold">粗体</option>
                   </select>
+                </div>
+                {/* 艺术字样式 */}
+                <div>
+                  <div className="text-xs text-gray-500 mb-1">字体样式</div>
+                  <div className="flex flex-wrap gap-1">
+                    {FONT_STYLES.map(style => (
+                      <button
+                        key={style.id}
+                        onClick={() => updateAnnotation('title', 'fontStyle', style.id)}
+                        className={`text-xs px-2 py-1 border rounded transition-all ${annotation.title.fontStyle === style.id ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 hover:border-gray-300'}`}
+                      >
+                        {style.name}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
@@ -411,12 +426,12 @@ export default function ControlPanel({
                   placeholder="输入副标题"
                   className="w-full text-sm px-2 py-1 border border-gray-200 rounded"
                 />
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <input
                     type="number"
                     value={annotation.subtitle.fontSize}
                     onChange={(e) => updateAnnotation('subtitle', 'fontSize', parseInt(e.target.value))}
-                    className="w-16 text-xs px-2 py-1 border border-gray-200 rounded"
+                    className="w-14 text-xs px-2 py-1 border border-gray-200 rounded"
                     min="12"
                     max="72"
                   />
@@ -426,6 +441,21 @@ export default function ControlPanel({
                     onChange={(e) => updateAnnotation('subtitle', 'color', e.target.value)}
                     className="w-8 h-7 p-0 border-0 rounded cursor-pointer"
                   />
+                </div>
+                {/* 艺术字样式 */}
+                <div>
+                  <div className="text-xs text-gray-500 mb-1">字体样式</div>
+                  <div className="flex flex-wrap gap-1">
+                    {FONT_STYLES.map(style => (
+                      <button
+                        key={style.id}
+                        onClick={() => updateAnnotation('subtitle', 'fontStyle', style.id)}
+                        className={`text-xs px-2 py-1 border rounded transition-all ${annotation.subtitle.fontStyle === style.id ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 hover:border-gray-300'}`}
+                      >
+                        {style.name}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}

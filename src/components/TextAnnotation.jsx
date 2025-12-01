@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { FONT_STYLES } from '../config/constants';
 
 export default function TextAnnotation({ annotation, onChange, isEditing }) {
   const [isDragging, setIsDragging] = useState(false);
@@ -38,6 +39,23 @@ export default function TextAnnotation({ annotation, onChange, isEditing }) {
     setDragType(null);
   };
 
+  const getFontStyle = (styleId) => {
+    return FONT_STYLES.find(f => f.id === styleId) || FONT_STYLES[0];
+  };
+
+  const getTextStyle = (textConfig) => {
+    const fontStyle = getFontStyle(textConfig.fontStyle);
+    
+    return {
+      transform: `translate(calc(-50% + ${textConfig.position.x}px), calc(-50% + ${textConfig.position.y}px))`,
+      fontSize: `${textConfig.fontSize}px`,
+      fontWeight: textConfig.fontWeight,
+      color: textConfig.color,
+      fontFamily: fontStyle.fontFamily,
+      ...fontStyle.style,
+    };
+  };
+
   return (
     <div 
       className="absolute inset-0 pointer-events-none z-20"
@@ -48,13 +66,8 @@ export default function TextAnnotation({ annotation, onChange, isEditing }) {
       {/* 标题 */}
       {annotation.title.visible && annotation.title.text && (
         <div
-          className={`absolute left-1/2 top-1/2 -translate-x-1/2 select-none whitespace-nowrap ${isEditing ? 'pointer-events-auto cursor-move ring-2 ring-blue-400 ring-offset-2 rounded' : ''}`}
-          style={{
-            transform: `translate(calc(-50% + ${annotation.title.position.x}px), calc(-50% + ${annotation.title.position.y}px))`,
-            fontSize: `${annotation.title.fontSize}px`,
-            fontWeight: annotation.title.fontWeight,
-            color: annotation.title.color,
-          }}
+          className={`absolute left-1/2 top-1/2 -translate-x-1/2 select-none whitespace-nowrap ${isEditing ? 'pointer-events-auto cursor-move ring-2 ring-blue-400 ring-offset-2 rounded px-2' : ''}`}
+          style={getTextStyle(annotation.title)}
           onMouseDown={(e) => handleMouseDown(e, 'title')}
         >
           {annotation.title.text}
@@ -64,13 +77,8 @@ export default function TextAnnotation({ annotation, onChange, isEditing }) {
       {/* 副标题 */}
       {annotation.subtitle.visible && annotation.subtitle.text && (
         <div
-          className={`absolute left-1/2 top-1/2 -translate-x-1/2 select-none whitespace-nowrap ${isEditing ? 'pointer-events-auto cursor-move ring-2 ring-blue-400 ring-offset-2 rounded' : ''}`}
-          style={{
-            transform: `translate(calc(-50% + ${annotation.subtitle.position.x}px), calc(-50% + ${annotation.subtitle.position.y}px))`,
-            fontSize: `${annotation.subtitle.fontSize}px`,
-            fontWeight: annotation.subtitle.fontWeight,
-            color: annotation.subtitle.color,
-          }}
+          className={`absolute left-1/2 top-1/2 -translate-x-1/2 select-none whitespace-nowrap ${isEditing ? 'pointer-events-auto cursor-move ring-2 ring-blue-400 ring-offset-2 rounded px-2' : ''}`}
+          style={getTextStyle(annotation.subtitle)}
           onMouseDown={(e) => handleMouseDown(e, 'subtitle')}
         >
           {annotation.subtitle.text}

@@ -1,13 +1,67 @@
-// 预设背景
+// 预设背景 - 简洁版
 export const BACKGROUNDS = [
-  { id: 'bg-1', type: 'gradient', value: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)', name: '极简灰白' },
-  { id: 'bg-2', type: 'gradient', value: 'linear-gradient(to top, #accbee 0%, #e7f0fd 100%)', name: '清爽蓝' },
-  { id: 'bg-3', type: 'gradient', value: 'linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%)', name: '梦幻紫蓝' },
-  { id: 'bg-4', type: 'gradient', value: 'linear-gradient(to right, #434343 0%, black 100%)', name: '深邃黑' },
-  { id: 'bg-5', type: 'gradient', value: 'linear-gradient(to top, #ff9a9e 0%, #fecfef 99%, #fecfef 100%)', name: '暖阳粉' },
-  { id: 'bg-6', type: 'gradient', value: 'radial-gradient(circle at 50% 50%, #1a2a6c, #b21f1f, #fdbb2d)', name: '落日弥散' },
-  { id: 'bg-mesh', type: 'image', value: 'url("https://images.unsplash.com/photo-1579546929518-9e396f3cc809?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80")', name: '艺术流体' },
-  { id: 'bg-glass', type: 'custom-glass', value: 'glass', name: '磨砂玻璃' },
+  // 纯色系
+  { id: 'white', type: 'solid', value: '#ffffff', name: '纯白' },
+  { id: 'light-gray', type: 'solid', value: '#f5f5f5', name: '浅灰' },
+  { id: 'black', type: 'solid', value: '#1a1a1a', name: '纯黑' },
+  { id: 'warm-white', type: 'solid', value: '#faf8f5', name: '暖白' },
+  
+  // 简洁渐变
+  { id: 'soft-gray', type: 'gradient', value: 'linear-gradient(180deg, #f5f7fa 0%, #e4e8ec 100%)', name: '柔灰' },
+  { id: 'soft-blue', type: 'gradient', value: 'linear-gradient(180deg, #e8f4fc 0%, #d1e8f8 100%)', name: '柔蓝' },
+  { id: 'soft-purple', type: 'gradient', value: 'linear-gradient(180deg, #f3e8ff 0%, #e4d4f4 100%)', name: '柔紫' },
+  { id: 'soft-pink', type: 'gradient', value: 'linear-gradient(180deg, #fce8ec 0%, #f8d4dc 100%)', name: '柔粉' },
+  { id: 'soft-green', type: 'gradient', value: 'linear-gradient(180deg, #e8fcf0 0%, #d4f4e0 100%)', name: '柔绿' },
+  { id: 'soft-orange', type: 'gradient', value: 'linear-gradient(180deg, #fff4e8 0%, #ffe8d4 100%)', name: '柔橙' },
+  
+  // 磨砂玻璃
+  { id: 'bg-glass', type: 'custom-glass', value: 'glass', name: '磨砂' },
+];
+
+// 艺术字体配置
+export const FONT_STYLES = [
+  { id: 'default', name: '默认', fontFamily: 'system-ui, sans-serif', style: {} },
+  { id: 'serif', name: '衬线', fontFamily: 'Georgia, serif', style: {} },
+  { id: 'mono', name: '等宽', fontFamily: 'Consolas, monospace', style: {} },
+  { id: 'rounded', name: '圆体', fontFamily: '"PingFang SC", "Microsoft YaHei", sans-serif', style: { fontWeight: '500' } },
+  
+  // 艺术效果
+  { id: 'gradient-blue', name: '渐变蓝', fontFamily: 'system-ui, sans-serif', style: {
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
+  }},
+  { id: 'gradient-sunset', name: '日落', fontFamily: 'system-ui, sans-serif', style: {
+    background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
+  }},
+  { id: 'gradient-ocean', name: '海洋', fontFamily: 'system-ui, sans-serif', style: {
+    background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
+  }},
+  { id: 'gradient-gold', name: '金色', fontFamily: 'system-ui, sans-serif', style: {
+    background: 'linear-gradient(135deg, #f5af19 0%, #f12711 100%)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
+  }},
+  
+  // 特效
+  { id: 'shadow', name: '阴影', fontFamily: 'system-ui, sans-serif', style: {
+    textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+  }},
+  { id: 'outline', name: '描边', fontFamily: 'system-ui, sans-serif', style: {
+    WebkitTextStroke: '1px currentColor',
+    WebkitTextFillColor: 'transparent',
+  }},
+  { id: 'glow', name: '发光', fontFamily: 'system-ui, sans-serif', style: {
+    textShadow: '0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor',
+  }},
 ];
 
 // 机型配置
@@ -192,6 +246,7 @@ export const DEFAULT_TEXT_ANNOTATION = {
     fontSize: 48,
     fontWeight: 'bold',
     color: '#1a1a1a',
+    fontStyle: 'default',
     position: { x: 0, y: -320 },
     visible: false,
   },
@@ -200,6 +255,7 @@ export const DEFAULT_TEXT_ANNOTATION = {
     fontSize: 24,
     fontWeight: 'normal',
     color: '#666666',
+    fontStyle: 'default',
     position: { x: 0, y: -260 },
     visible: false,
   }
