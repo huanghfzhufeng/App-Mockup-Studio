@@ -173,3 +173,34 @@ export const PRESET_ANGLES = [
   { id: 'showcase', name: '展示', rotateX: 10, rotateY: 15, perspective: 1200, icon: '◈' },
   { id: 'dramatic', name: '戏剧', rotateX: -5, rotateY: 35, perspective: 900, icon: '◆' },
 ];
+
+// 导出比例配置
+export const EXPORT_RATIOS = [
+  { id: 'auto', name: '自适应', ratio: null },
+  { id: '1:1', name: '1:1', ratio: 1 },
+  { id: '3:4', name: '3:4', ratio: 3/4 },
+  { id: '4:3', name: '4:3', ratio: 4/3 },
+  { id: '4:5', name: '4:5', ratio: 4/5 },
+  { id: '9:16', name: '9:16', ratio: 9/16 },
+  { id: '16:9', name: '16:9', ratio: 16/9 },
+];
+
+// 默认文字标注
+export const DEFAULT_TEXT_ANNOTATION = {
+  title: {
+    text: '',
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
+    position: { x: 0, y: -320 },
+    visible: false,
+  },
+  subtitle: {
+    text: '',
+    fontSize: 24,
+    fontWeight: 'normal',
+    color: '#666666',
+    position: { x: 0, y: -260 },
+    visible: false,
+  }
+};
