@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import {
-  Upload, Download, Smartphone, Layout, Palette, Image as ImageIcon,
-  Box, RotateCcw, Type, Save, Layers, Ratio, Moon, Sun, RotateCw,
-  Sparkles, ImagePlus, ChevronDown, ChevronRight, Zap
+  Smartphone, Layout, Palette, Box, RotateCcw, Type, Save, Layers, 
+  Moon, Sun, RotateCw, Sparkles, ImagePlus, ChevronDown
 } from 'lucide-react';
-import { BACKGROUNDS, DEVICE_MODELS, PRESET_ANGLES, EXPORT_RATIOS, FONT_STYLES, LAYOUT_MODES } from '../config/constants';
+import { BACKGROUNDS, DEVICE_MODELS, PRESET_ANGLES, FONT_STYLES, LAYOUT_MODES } from '../config/constants';
 
 // 可折叠区块组件
 function Section({ title, icon: Icon, children, defaultOpen = true, badge }) {
@@ -60,10 +59,6 @@ function SmallButton({ active, children, onClick, className = '' }) {
 }
 
 export default function ControlPanel({
-  screenshot,
-  screenshot2,
-  onImageUpload,
-  onImageUpload2,
   onBgImageUpload,
   model,
   setModel,
@@ -76,27 +71,8 @@ export default function ControlPanel({
   customBgImage,
   layout,
   setLayout,
-  fitMode,
-  setFitMode,
-  scale,
-  setScale,
-  position,
-  setPosition,
-  position2,
-  setPosition2,
-  moveMode,
-  setMoveMode,
-  activeDevice,
-  setActiveDevice,
   hasShadow,
   setHasShadow,
-  exportRes,
-  setExportRes,
-  exportRatio,
-  setExportRatio,
-  onExport,
-  onBatchExport,
-  isExporting,
   rotateX,
   setRotateX,
   rotateY,
@@ -158,30 +134,28 @@ export default function ControlPanel({
   };
 
   return (
-    <div className="w-full md:w-[380px] border-r border-border/50 h-auto md:h-screen overflow-y-auto flex-shrink-0 z-20 bg-sidebar scrollbar-thin">
+    <div className="w-full md:w-[320px] border-r border-border/50 h-auto md:h-screen overflow-y-auto flex-shrink-0 z-20 bg-sidebar scrollbar-thin">
       {/* 头部 */}
-      <div className="p-5 sticky top-0 z-10 bg-sidebar/95 backdrop-blur-xl border-b border-border/50">
-        <div className="flex items-center justify-between mb-4">
+      <div className="p-4 sticky top-0 z-10 bg-sidebar/95 backdrop-blur-xl border-b border-border/50">
+        <div className="flex items-center justify-between mb-3">
           <div>
-            <h1 className="text-lg font-bold text-foreground tracking-tight">
-              SnapShell
-            </h1>
-            <p className="text-xs text-muted-foreground mt-0.5">让产品截图更有质感</p>
+            <h1 className="text-lg font-bold text-foreground tracking-tight">SnapShell</h1>
+            <p className="text-[10px] text-muted-foreground">让产品截图更有质感</p>
           </div>
           <div className="flex gap-1">
             <button 
               onClick={toggleDark} 
-              className="w-9 h-9 rounded-xl bg-secondary hover:bg-accent flex items-center justify-center transition-all duration-200 btn-press"
+              className="w-8 h-8 rounded-lg bg-secondary hover:bg-accent flex items-center justify-center transition-all duration-200 btn-press"
               title={isDark ? '切换亮色' : '切换暗色'}
             >
-              {isDark ? <Sun size={16} /> : <Moon size={16} />}
+              {isDark ? <Sun size={14} /> : <Moon size={14} />}
             </button>
             <button 
               onClick={onReset} 
-              className="w-9 h-9 rounded-xl bg-secondary hover:bg-accent flex items-center justify-center transition-all duration-200 btn-press" 
+              className="w-8 h-8 rounded-lg bg-secondary hover:bg-accent flex items-center justify-center transition-all duration-200 btn-press" 
               title="重置所有设置"
             >
-              <RotateCcw size={16} />
+              <RotateCcw size={14} />
             </button>
           </div>
         </div>
@@ -191,14 +165,14 @@ export default function ControlPanel({
           <button 
             onClick={onUndo} 
             disabled={!canUndo}
-            className="flex-1 h-9 text-xs font-medium rounded-xl bg-secondary hover:bg-accent border border-border/50 transition-all duration-200 disabled:opacity-30 disabled:pointer-events-none btn-press"
+            className="flex-1 h-8 text-xs font-medium rounded-lg bg-secondary hover:bg-accent border border-border/50 transition-all duration-200 disabled:opacity-30 disabled:pointer-events-none btn-press"
           >
             ↶ 撤销
           </button>
           <button 
             onClick={onRedo}
             disabled={!canRedo}
-            className="flex-1 h-9 text-xs font-medium rounded-xl bg-secondary hover:bg-accent border border-border/50 transition-all duration-200 disabled:opacity-30 disabled:pointer-events-none btn-press"
+            className="flex-1 h-8 text-xs font-medium rounded-lg bg-secondary hover:bg-accent border border-border/50 transition-all duration-200 disabled:opacity-30 disabled:pointer-events-none btn-press"
           >
             重做 ↷
           </button>
@@ -235,122 +209,17 @@ export default function ControlPanel({
             <Save size={12} /> 保存当前配置为模板
           </button>
           {showTemplateModal && (
-            <div className="mt-3 p-4 rounded-xl bg-secondary/50 border border-border/50">
+            <div className="mt-3 p-3 rounded-xl bg-secondary/50 border border-border/50">
               <input 
                 type="text" 
                 value={newTemplateName} 
                 onChange={(e) => setNewTemplateName(e.target.value)} 
                 placeholder="输入模板名称" 
-                className="w-full h-9 text-sm px-3 rounded-lg bg-background border border-border focus:border-foreground/30 mb-3" 
+                className="w-full h-8 text-sm px-3 rounded-lg bg-background border border-border focus:border-foreground/30 mb-2" 
               />
               <div className="flex gap-2">
-                <button onClick={handleSaveTemplate} className="h-8 px-4 text-xs font-medium bg-foreground text-background rounded-lg btn-press">保存</button>
-                <button onClick={() => setShowTemplateModal(false)} className="h-8 px-4 text-xs font-medium bg-secondary rounded-lg btn-press">取消</button>
-              </div>
-            </div>
-          )}
-        </Section>
-
-        {/* 上传 */}
-        <Section title="截图上传" icon={Upload}>
-          <div className={`grid gap-3 ${layout === 'double' || layout === 'mixed' ? 'grid-cols-2' : 'grid-cols-1'}`}>
-            <div className="relative group">
-              <input type="file" accept="image/png, image/jpeg" onChange={onImageUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-              <div className="border-2 border-dashed border-border rounded-xl p-4 text-center transition-all duration-300 group-hover:border-foreground/30 group-hover:bg-accent/30">
-                {screenshot ? (
-                  <div className="relative w-full h-20 rounded-lg overflow-hidden bg-secondary">
-                    <img src={screenshot} alt="Preview" className="w-full h-full object-contain" />
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center py-3 text-muted-foreground group-hover:text-foreground transition-colors">
-                    <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center mb-2 group-hover:bg-accent transition-colors">
-                      <ImageIcon size={18} />
-                    </div>
-                    <span className="text-xs font-medium">{layout !== 'single' ? '图片 1' : '点击上传'}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-            {(layout === 'double' || layout === 'mixed') && (
-              <div className="relative group">
-                <input type="file" accept="image/png, image/jpeg" onChange={onImageUpload2} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-                <div className="border-2 border-dashed border-border rounded-xl p-4 text-center transition-all duration-300 group-hover:border-foreground/30 group-hover:bg-accent/30">
-                  {screenshot2 ? (
-                    <div className="relative w-full h-20 rounded-lg overflow-hidden bg-secondary">
-                      <img src={screenshot2} alt="Preview 2" className="w-full h-full object-contain" />
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center py-3 text-muted-foreground group-hover:text-foreground transition-colors">
-                      <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center mb-2 group-hover:bg-accent transition-colors">
-                        <ImageIcon size={18} />
-                      </div>
-                      <span className="text-xs font-medium">图片 2</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {screenshot && (
-            <div className="space-y-4 p-4 rounded-xl bg-secondary/30 border border-border/30">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-muted-foreground">填充模式</span>
-                <div className="flex rounded-lg overflow-hidden border border-border/50">
-                  <SmallButton active={fitMode === 'cover'} onClick={() => setFitMode('cover')} className="rounded-none rounded-l-lg border-0">Fill</SmallButton>
-                  <SmallButton active={fitMode === 'contain'} onClick={() => setFitMode('contain')} className="rounded-none rounded-r-lg border-0">Fit</SmallButton>
-                </div>
-              </div>
-              
-              <div>
-                <div className="flex justify-between text-xs mb-2">
-                  <span className="text-muted-foreground">缩放</span>
-                  <span className="font-mono font-medium text-foreground">{(scale * 100).toFixed(0)}%</span>
-                </div>
-                <input type="range" min="0.5" max="2" step="0.05" value={scale} onChange={(e) => setScale(parseFloat(e.target.value))} className="w-full" />
-              </div>
-              
-              {/* 移动模式控制 */}
-              <div className={`p-4 rounded-xl border transition-all duration-300 ${moveMode ? 'border-foreground/30 bg-accent/50' : 'border-border/50 bg-secondary/30'}`}>
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-medium text-foreground">图片位置</span>
-                  <SmallButton active={moveMode} onClick={() => setMoveMode(!moveMode)}>
-                    {moveMode ? '✓ 移动中' : '开启移动'}
-                  </SmallButton>
-                </div>
-                
-                {(layout === 'double' || layout === 'mixed') && (
-                  <div className="flex gap-2 mb-3">
-                    <SmallButton active={activeDevice === 1} onClick={() => setActiveDevice(1)} className="flex-1">设备 1</SmallButton>
-                    <SmallButton active={activeDevice === 2} onClick={() => setActiveDevice(2)} className="flex-1">设备 2</SmallButton>
-                  </div>
-                )}
-                
-                {(() => {
-                  const currentPos = activeDevice === 1 ? position : position2;
-                  const setCurrentPos = activeDevice === 1 ? setPosition : setPosition2;
-                  return (
-                    <div className="space-y-3">
-                      <div>
-                        <div className="flex justify-between text-xs mb-1.5">
-                          <span className="text-muted-foreground">X 偏移</span>
-                          <span className="font-mono text-foreground">{currentPos.x}px</span>
-                        </div>
-                        <input type="range" min="-150" max="150" step="1" value={currentPos.x} onChange={(e) => setCurrentPos({...currentPos, x: parseInt(e.target.value)})} className="w-full" />
-                      </div>
-                      <div>
-                        <div className="flex justify-between text-xs mb-1.5">
-                          <span className="text-muted-foreground">Y 偏移</span>
-                          <span className="font-mono text-foreground">{currentPos.y}px</span>
-                        </div>
-                        <input type="range" min="-150" max="150" step="1" value={currentPos.y} onChange={(e) => setCurrentPos({...currentPos, y: parseInt(e.target.value)})} className="w-full" />
-                      </div>
-                      <button onClick={() => setCurrentPos({ x: 0, y: 0 })} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
-                        <RotateCcw size={10} /> 重置位置
-                      </button>
-                    </div>
-                  );
-                })()}
+                <button onClick={handleSaveTemplate} className="h-7 px-3 text-xs font-medium bg-foreground text-background rounded-lg btn-press">保存</button>
+                <button onClick={() => setShowTemplateModal(false)} className="h-7 px-3 text-xs font-medium bg-secondary rounded-lg btn-press">取消</button>
               </div>
             </div>
           )}
@@ -359,15 +228,15 @@ export default function ControlPanel({
         {/* 机型 */}
         <Section title="机型选择" icon={Smartphone}>
           {Object.entries(groupedModels).map(([brand, models]) => (
-            <div key={brand} className="mb-4 last:mb-0">
+            <div key={brand} className="mb-3 last:mb-0">
               <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">{brandNames[brand]}</div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-1.5">
                 {models.map(({ key, name }) => (
                   <button 
                     key={key} 
                     onClick={() => { setModel(key); setDeviceColor(Object.keys(DEVICE_MODELS[key].frameColor)[0]); }}
                     className={`
-                      text-xs h-9 px-3 rounded-lg truncate transition-all duration-200 btn-press font-medium
+                      text-xs h-8 px-2 rounded-lg truncate transition-all duration-200 btn-press font-medium
                       ${model === key 
                         ? 'bg-foreground text-background shadow-md' 
                         : 'bg-secondary hover:bg-accent border border-border/50 hover:border-foreground/20'
@@ -387,7 +256,7 @@ export default function ControlPanel({
                 key={colorKey} 
                 onClick={() => setDeviceColor(colorKey)}
                 className={`
-                  w-8 h-8 rounded-full transition-all duration-200 btn-press
+                  w-7 h-7 rounded-full transition-all duration-200 btn-press
                   ${deviceColor === colorKey ? 'ring-2 ring-foreground ring-offset-2 ring-offset-background scale-110' : 'hover:scale-105'}
                 `}
                 style={{ backgroundColor: DEVICE_MODELS[model].frameColor[colorKey], boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }} 
@@ -399,7 +268,7 @@ export default function ControlPanel({
 
         {/* 布局 */}
         <Section title="布局设置" icon={Layout}>
-          <div className="flex gap-2">
+          <div className="flex gap-1.5">
             {LAYOUT_MODES.map(mode => (
               <SmallButton 
                 key={mode.id} 
@@ -411,106 +280,105 @@ export default function ControlPanel({
               </SmallButton>
             ))}
           </div>
-          <div className="flex flex-wrap gap-x-6 gap-y-3 pt-3">
-            <label className="flex items-center gap-2.5 text-xs cursor-pointer text-foreground group">
+          <div className="flex flex-wrap gap-x-4 gap-y-2 pt-3">
+            <label className="flex items-center gap-2 text-xs cursor-pointer text-foreground">
               <input type="checkbox" checked={hasShadow} onChange={(e) => setHasShadow(e.target.checked)} />
-              <span className="group-hover:text-foreground transition-colors">投影效果</span>
+              <span>投影</span>
             </label>
-            <label className="flex items-center gap-2.5 text-xs cursor-pointer text-foreground group">
+            <label className="flex items-center gap-2 text-xs cursor-pointer text-foreground">
               <input type="checkbox" checked={isLandscape} onChange={(e) => setIsLandscape(e.target.checked)} />
-              <RotateCw size={12} className="text-muted-foreground" />
-              <span className="group-hover:text-foreground transition-colors">横屏</span>
+              <RotateCw size={10} className="text-muted-foreground" />
+              <span>横屏</span>
             </label>
-            <label className="flex items-center gap-2.5 text-xs cursor-pointer text-foreground group">
+            <label className="flex items-center gap-2 text-xs cursor-pointer text-foreground">
               <input type="checkbox" checked={enableAnimation} onChange={(e) => setEnableAnimation(e.target.checked)} />
-              <Sparkles size={12} className="text-muted-foreground" />
-              <span className="group-hover:text-foreground transition-colors">悬浮动画</span>
+              <Sparkles size={10} className="text-muted-foreground" />
+              <span>动画</span>
             </label>
           </div>
         </Section>
 
         {/* 3D 效果 */}
         <Section title="3D 效果" icon={Box}>
-          <div className="grid grid-cols-6 gap-2 mb-4">
+          <div className="grid grid-cols-6 gap-1.5 mb-3">
             {PRESET_ANGLES.map(preset => (
               <button 
                 key={preset.id} 
                 onClick={() => applyPreset(preset)}
-                className="flex flex-col items-center p-2 rounded-xl bg-secondary hover:bg-accent border border-border/50 hover:border-foreground/20 transition-all duration-200 btn-press group" 
+                className="flex flex-col items-center p-1.5 rounded-lg bg-secondary hover:bg-accent border border-border/50 hover:border-foreground/20 transition-all duration-200 btn-press group" 
                 title={preset.name}
               >
-                <span className="text-lg mb-0.5">{preset.icon}</span>
-                <span className="text-[9px] text-muted-foreground group-hover:text-foreground transition-colors">{preset.name}</span>
+                <span className="text-base">{preset.icon}</span>
+                <span className="text-[8px] text-muted-foreground group-hover:text-foreground">{preset.name}</span>
               </button>
             ))}
           </div>
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <span className="text-xs w-6 text-muted-foreground font-medium">X</span>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xs w-5 text-muted-foreground">X</span>
               <input type="range" min="-30" max="30" value={rotateX} onChange={(e) => setRotateX(parseInt(e.target.value))} className="flex-1" />
-              <span className="text-xs w-10 text-right font-mono text-foreground">{rotateX}°</span>
+              <span className="text-xs w-8 text-right font-mono text-foreground">{rotateX}°</span>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="text-xs w-6 text-muted-foreground font-medium">Y</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs w-5 text-muted-foreground">Y</span>
               <input type="range" min="-45" max="45" value={rotateY} onChange={(e) => setRotateY(parseInt(e.target.value))} className="flex-1" />
-              <span className="text-xs w-10 text-right font-mono text-foreground">{rotateY}°</span>
+              <span className="text-xs w-8 text-right font-mono text-foreground">{rotateY}°</span>
             </div>
           </div>
         </Section>
 
-
         {/* 文字标注 */}
         <Section title="文字标注" icon={Type} defaultOpen={false}>
-          <label className="flex items-center gap-2.5 text-xs cursor-pointer text-foreground mb-4">
+          <label className="flex items-center gap-2 text-xs cursor-pointer text-foreground mb-3">
             <input type="checkbox" checked={isEditingText} onChange={(e) => setIsEditingText(e.target.checked)} />
             <span>编辑模式（可拖拽文字）</span>
           </label>
           
           {/* 标题 */}
-          <div className="p-4 rounded-xl bg-secondary/30 border border-border/30 mb-3">
-            <div className="flex items-center justify-between mb-3">
+          <div className="p-3 rounded-xl bg-secondary/30 border border-border/30 mb-2">
+            <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-medium text-foreground">标题</span>
               <input type="checkbox" checked={annotation.title.visible} onChange={(e) => updateAnnotation('title', 'visible', e.target.checked)} />
             </div>
             {annotation.title.visible && (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <input 
                   type="text" 
                   value={annotation.title.text} 
                   onChange={(e) => updateAnnotation('title', 'text', e.target.value)} 
-                  placeholder="输入标题文字"
-                  className="w-full h-9 text-sm px-3 rounded-lg bg-background border border-border focus:border-foreground/30" 
+                  placeholder="输入标题"
+                  className="w-full h-8 text-sm px-3 rounded-lg bg-background border border-border focus:border-foreground/30" 
                 />
                 <div className="flex gap-2 flex-wrap">
                   <input 
                     type="number" 
                     value={annotation.title.fontSize} 
                     onChange={(e) => updateAnnotation('title', 'fontSize', parseInt(e.target.value))}
-                    className="w-16 h-9 text-xs px-3 rounded-lg bg-background border border-border focus:border-foreground/30" 
-                    min="12" 
-                    max="120" 
+                    className="w-14 h-8 text-xs px-2 rounded-lg bg-background border border-border" 
+                    min="12" max="120" 
                   />
                   <input 
                     type="color" 
                     value={annotation.title.color} 
                     onChange={(e) => updateAnnotation('title', 'color', e.target.value)} 
-                    className="w-9 h-9 rounded-lg cursor-pointer" 
+                    className="w-8 h-8 rounded-lg cursor-pointer" 
                   />
                   <select 
                     value={annotation.title.fontWeight} 
                     onChange={(e) => updateAnnotation('title', 'fontWeight', e.target.value)}
-                    className="h-9 text-xs px-3 rounded-lg bg-background border border-border focus:border-foreground/30"
+                    className="h-8 text-xs px-2 rounded-lg bg-background border border-border"
                   >
                     <option value="normal">常规</option>
                     <option value="bold">粗体</option>
                   </select>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-1">
                   {FONT_STYLES.map(style => (
                     <SmallButton 
                       key={style.id} 
                       active={annotation.title.fontStyle === style.id}
                       onClick={() => updateAnnotation('title', 'fontStyle', style.id)}
+                      className="text-[10px] h-6 px-2"
                     >
                       {style.name}
                     </SmallButton>
@@ -521,34 +389,33 @@ export default function ControlPanel({
           </div>
           
           {/* 副标题 */}
-          <div className="p-4 rounded-xl bg-secondary/30 border border-border/30">
-            <div className="flex items-center justify-between mb-3">
+          <div className="p-3 rounded-xl bg-secondary/30 border border-border/30">
+            <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-medium text-foreground">副标题</span>
               <input type="checkbox" checked={annotation.subtitle.visible} onChange={(e) => updateAnnotation('subtitle', 'visible', e.target.checked)} />
             </div>
             {annotation.subtitle.visible && (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <input 
                   type="text" 
                   value={annotation.subtitle.text} 
                   onChange={(e) => updateAnnotation('subtitle', 'text', e.target.value)} 
-                  placeholder="输入副标题文字"
-                  className="w-full h-9 text-sm px-3 rounded-lg bg-background border border-border focus:border-foreground/30" 
+                  placeholder="输入副标题"
+                  className="w-full h-8 text-sm px-3 rounded-lg bg-background border border-border focus:border-foreground/30" 
                 />
                 <div className="flex gap-2">
                   <input 
                     type="number" 
                     value={annotation.subtitle.fontSize} 
                     onChange={(e) => updateAnnotation('subtitle', 'fontSize', parseInt(e.target.value))}
-                    className="w-16 h-9 text-xs px-3 rounded-lg bg-background border border-border focus:border-foreground/30" 
-                    min="12" 
-                    max="72" 
+                    className="w-14 h-8 text-xs px-2 rounded-lg bg-background border border-border" 
+                    min="12" max="72" 
                   />
                   <input 
                     type="color" 
                     value={annotation.subtitle.color} 
                     onChange={(e) => updateAnnotation('subtitle', 'color', e.target.value)} 
-                    className="w-9 h-9 rounded-lg cursor-pointer" 
+                    className="w-8 h-8 rounded-lg cursor-pointer" 
                   />
                 </div>
               </div>
@@ -558,22 +425,22 @@ export default function ControlPanel({
 
         {/* 水印 */}
         <Section title="水印" icon={Type} defaultOpen={false}>
-          <div className="p-4 rounded-xl bg-secondary/30 border border-border/30">
-            <label className="flex items-center gap-2.5 text-xs cursor-pointer text-foreground mb-3">
+          <div className="p-3 rounded-xl bg-secondary/30 border border-border/30">
+            <label className="flex items-center gap-2 text-xs cursor-pointer text-foreground mb-2">
               <input type="checkbox" checked={watermark.visible} onChange={(e) => setWatermark({ ...watermark, visible: e.target.checked })} />
               <span>显示水印</span>
             </label>
             {watermark.visible && (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <input 
                   type="text" 
                   value={watermark.text} 
                   onChange={(e) => setWatermark({ ...watermark, text: e.target.value })} 
                   placeholder="水印文字"
-                  className="w-full h-9 text-sm px-3 rounded-lg bg-background border border-border focus:border-foreground/30" 
+                  className="w-full h-8 text-sm px-3 rounded-lg bg-background border border-border focus:border-foreground/30" 
                 />
                 <div>
-                  <div className="flex justify-between text-xs mb-2">
+                  <div className="flex justify-between text-xs mb-1">
                     <span className="text-muted-foreground">透明度</span>
                     <span className="font-mono text-foreground">{Math.round(watermark.opacity * 100)}%</span>
                   </div>
@@ -586,105 +453,46 @@ export default function ControlPanel({
 
         {/* 背景 */}
         <Section title="背景" icon={Palette}>
-          <div className="grid grid-cols-6 gap-2 mb-3">
+          <div className="grid grid-cols-6 gap-1.5 mb-2">
             {BACKGROUNDS.map(bg => (
               <button 
                 key={bg.id} 
                 onClick={() => setBackground(bg)}
                 className={`
-                  w-full aspect-square rounded-xl overflow-hidden transition-all duration-200 btn-press
-                  ${background.id === bg.id ? 'ring-2 ring-foreground ring-offset-2 ring-offset-background scale-105' : 'hover:scale-105'}
+                  w-full aspect-square rounded-lg overflow-hidden transition-all duration-200 btn-press
+                  ${background.id === bg.id ? 'ring-2 ring-foreground ring-offset-1 ring-offset-background scale-105' : 'hover:scale-105'}
                 `}
-                style={bg.type === 'solid' || bg.type === 'gradient' ? { background: bg.value, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' } : {}}
+                style={bg.type === 'solid' || bg.type === 'gradient' ? { background: bg.value, boxShadow: '0 1px 4px rgba(0,0,0,0.1)' } : {}}
               >
-                {bg.type === 'custom-glass' && <div className="w-full h-full flex items-center justify-center text-[8px] font-medium bg-secondary text-muted-foreground">Glass</div>}
+                {bg.type === 'custom-glass' && <div className="w-full h-full flex items-center justify-center text-[7px] font-medium bg-secondary text-muted-foreground">Glass</div>}
               </button>
             ))}
             <button 
               onClick={() => setBackground({ id: 'custom', type: 'solid', value: customBgColor })}
               className={`
-                w-full aspect-square rounded-xl flex items-center justify-center bg-secondary border-2 border-dashed transition-all duration-200 btn-press
+                w-full aspect-square rounded-lg flex items-center justify-center bg-secondary border-2 border-dashed transition-all duration-200 btn-press
                 ${background.id === 'custom' ? 'border-foreground' : 'border-border hover:border-foreground/30'}
               `}
             >
-              <div className="w-5 h-5 rounded-full shadow-sm" style={{ backgroundColor: customBgColor }}></div>
+              <div className="w-4 h-4 rounded-full shadow-sm" style={{ backgroundColor: customBgColor }}></div>
             </button>
           </div>
           {background.id === 'custom' && (
-            <div className="flex items-center gap-3 mb-3 p-3 rounded-xl bg-secondary/30">
-              <input type="color" value={customBgColor} onChange={(e) => setCustomBgColor(e.target.value)} className="w-9 h-9 rounded-lg cursor-pointer" />
+            <div className="flex items-center gap-2 mb-2 p-2 rounded-lg bg-secondary/30">
+              <input type="color" value={customBgColor} onChange={(e) => setCustomBgColor(e.target.value)} className="w-8 h-8 rounded-lg cursor-pointer" />
               <span className="text-xs font-mono uppercase text-muted-foreground">{customBgColor}</span>
             </div>
           )}
           <div className="relative">
             <input type="file" accept="image/*" onChange={onBgImageUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-            <button className="w-full h-10 text-xs font-medium rounded-xl bg-secondary hover:bg-accent border border-border/50 hover:border-foreground/20 flex items-center justify-center gap-2 transition-all duration-200">
-              <ImagePlus size={14} /> {customBgImage ? '更换背景图片' : '上传背景图片'}
+            <button className="w-full h-9 text-xs font-medium rounded-lg bg-secondary hover:bg-accent border border-border/50 hover:border-foreground/20 flex items-center justify-center gap-2 transition-all duration-200">
+              <ImagePlus size={12} /> {customBgImage ? '更换背景图' : '上传背景图'}
             </button>
           </div>
         </Section>
-
-        {/* 导出 */}
-        <Section title="导出" icon={Download}>
-          <div className="mb-4">
-            <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">分辨率</div>
-            <div className="flex gap-2">
-              {[1, 2, 3].map(r => (
-                <SmallButton 
-                  key={r} 
-                  active={exportRes === r}
-                  onClick={() => setExportRes(r)}
-                  className="flex-1"
-                >
-                  {r === 1 ? '1080p' : r === 2 ? '2K' : '4K'}
-                </SmallButton>
-              ))}
-            </div>
-          </div>
-          <div className="mb-5">
-            <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <Ratio size={10} /> 导出比例
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {EXPORT_RATIOS.map(r => (
-                <SmallButton 
-                  key={r.id} 
-                  active={exportRatio.id === r.id}
-                  onClick={() => setExportRatio(r)}
-                >
-                  {r.name}
-                </SmallButton>
-              ))}
-            </div>
-          </div>
-          <button 
-            onClick={onExport} 
-            disabled={isExporting}
-            className="w-full h-12 bg-foreground hover:bg-foreground/90 text-background rounded-xl font-semibold shadow-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none btn-press mb-3"
-          >
-            {isExporting ? (
-              <>
-                <div className="w-4 h-4 border-2 border-background/30 border-t-background rounded-full animate-spin"></div>
-                生成中...
-              </>
-            ) : (
-              <>
-                <Zap size={16} /> 下载生成图
-              </>
-            )}
-          </button>
-          <button 
-            onClick={onBatchExport} 
-            disabled={isExporting}
-            className="w-full h-10 rounded-xl font-medium bg-secondary hover:bg-accent border border-border/50 hover:border-foreground/20 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none text-xs btn-press"
-          >
-            批量导出（所有比例）
-          </button>
-        </Section>
       </div>
       
-      {/* 底部留白 */}
-      <div className="h-8"></div>
+      <div className="h-6"></div>
     </div>
   );
 }

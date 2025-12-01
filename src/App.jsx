@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import ControlPanel from './components/ControlPanel';
 import PreviewArea from './components/PreviewArea';
+import UploadPanel from './components/UploadPanel';
 import { useExport } from './hooks/useExport';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useKeyboard } from './hooks/useKeyboard';
@@ -28,6 +29,12 @@ export default function App() {
   const [position2, setPosition2] = useState({ x: 0, y: 0 });
   const [moveMode, setMoveMode] = useState(false); // 移动模式开关
   const [activeDevice, setActiveDevice] = useState(1); // 当前选中的设备 1 或 2
+  
+  // 设备框架位置和缩放
+  const [devicePosition1, setDevicePosition1] = useState({ x: 0, y: 0 });
+  const [devicePosition2, setDevicePosition2] = useState({ x: 0, y: 0 });
+  const [deviceScale1, setDeviceScale1] = useLocalStorage('mockup-device-scale1', 1);
+  const [deviceScale2, setDeviceScale2] = useLocalStorage('mockup-device-scale2', 1);
   const [hasShadow, setHasShadow] = useLocalStorage('mockup-shadow', DEFAULT_CONFIG.hasShadow);
   const [exportRes, setExportRes] = useLocalStorage('mockup-res', DEFAULT_CONFIG.exportRes);
   const [exportRatio, setExportRatio] = useLocalStorage('mockup-ratio', EXPORT_RATIOS[0]);
@@ -157,6 +164,10 @@ export default function App() {
       setScale(DEFAULT_CONFIG.scale);
       setPosition({ x: 0, y: 0 });
       setPosition2({ x: 0, y: 0 });
+      setDevicePosition1({ x: 0, y: 0 });
+      setDevicePosition2({ x: 0, y: 0 });
+      setDeviceScale1(1);
+      setDeviceScale2(1);
       setMoveMode(false);
       setActiveDevice(1);
       setHasShadow(DEFAULT_CONFIG.hasShadow);
@@ -222,10 +233,6 @@ export default function App() {
   return (
     <div className={`min-h-screen font-sans flex flex-col md:flex-row transition-colors duration-300 ${isDark ? 'dark' : ''}`}>
       <ControlPanel
-        screenshot={screenshot}
-        screenshot2={screenshot2}
-        onImageUpload={handleImageUpload}
-        onImageUpload2={handleImageUpload2}
         onBgImageUpload={handleBgImageUpload}
         model={model}
         setModel={(v) => { saveHistory(); setModel(v); }}
@@ -238,27 +245,8 @@ export default function App() {
         customBgImage={customBgImage}
         layout={layout}
         setLayout={(v) => { saveHistory(); setLayout(v); }}
-        fitMode={fitMode}
-        setFitMode={setFitMode}
-        scale={scale}
-        setScale={setScale}
-        position={position}
-        setPosition={setPosition}
-        position2={position2}
-        setPosition2={setPosition2}
-        moveMode={moveMode}
-        setMoveMode={setMoveMode}
-        activeDevice={activeDevice}
-        setActiveDevice={setActiveDevice}
         hasShadow={hasShadow}
         setHasShadow={(v) => { saveHistory(); setHasShadow(v); }}
-        exportRes={exportRes}
-        setExportRes={setExportRes}
-        exportRatio={exportRatio}
-        setExportRatio={setExportRatio}
-        onExport={handleExport}
-        onBatchExport={handleBatchExport}
-        isExporting={isExporting}
         rotateX={rotateX}
         setRotateX={(v) => { saveHistory(); setRotateX(v); }}
         rotateY={rotateY}
@@ -307,6 +295,14 @@ export default function App() {
         setMoveMode={setMoveMode}
         activeDevice={activeDevice}
         setActiveDevice={setActiveDevice}
+        devicePosition1={devicePosition1}
+        setDevicePosition1={setDevicePosition1}
+        devicePosition2={devicePosition2}
+        setDevicePosition2={setDevicePosition2}
+        deviceScale1={deviceScale1}
+        setDeviceScale1={setDeviceScale1}
+        deviceScale2={deviceScale2}
+        setDeviceScale2={setDeviceScale2}
         hasShadow={hasShadow}
         rotateX={rotateX}
         rotateY={rotateY}
@@ -320,6 +316,36 @@ export default function App() {
         watermark={watermark}
         onImageDrop={handleImageDrop}
         isDark={isDark}
+      />
+      <UploadPanel
+        screenshot={screenshot}
+        screenshot2={screenshot2}
+        onImageUpload={handleImageUpload}
+        onImageUpload2={handleImageUpload2}
+        layout={layout}
+        fitMode={fitMode}
+        setFitMode={setFitMode}
+        scale={scale}
+        setScale={setScale}
+        position={position}
+        setPosition={setPosition}
+        position2={position2}
+        setPosition2={setPosition2}
+        moveMode={moveMode}
+        setMoveMode={setMoveMode}
+        activeDevice={activeDevice}
+        setActiveDevice={setActiveDevice}
+        deviceScale1={deviceScale1}
+        setDeviceScale1={setDeviceScale1}
+        deviceScale2={deviceScale2}
+        setDeviceScale2={setDeviceScale2}
+        exportRes={exportRes}
+        setExportRes={setExportRes}
+        exportRatio={exportRatio}
+        setExportRatio={setExportRatio}
+        onExport={handleExport}
+        onBatchExport={handleBatchExport}
+        isExporting={isExporting}
       />
     </div>
   );

@@ -23,6 +23,14 @@ const PreviewArea = forwardRef(({
   setMoveMode,
   activeDevice,
   setActiveDevice,
+  devicePosition1,
+  setDevicePosition1,
+  devicePosition2,
+  setDevicePosition2,
+  deviceScale1,
+  setDeviceScale1,
+  deviceScale2,
+  setDeviceScale2,
   hasShadow,
   rotateX,
   rotateY,
@@ -40,8 +48,10 @@ const PreviewArea = forwardRef(({
   const [isDragging, setIsDragging] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [previewZoom, setPreviewZoom] = useState(1);
+  const [dragType, setDragType] = useState('image'); // 'image' 或 'device'
   const dragStart = useRef({ x: 0, y: 0 });
   const posStart = useRef({ x: 0, y: 0 });
+  const draggingDevice = useRef(1); // 当前正在拖动的设备
 
   const getBackgroundStyle = () => {
     if (customBgImage) {
@@ -59,30 +69,77 @@ const PreviewArea = forwardRef(({
     return { background: background.value };
   };
 
-  const handleMouseDown = (e, deviceIndex) => {
+  // 拖动设备框架
+  const handleDeviceMouseDown = (e, deviceIndex) => {
     if (isEditingText || !moveMode) return;
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(true);
+    setDragType('device');
+    draggingDevice.current = deviceIndex;
     dragStart.current = { x: e.clientX, y: e.clientY };
-    const currentPos = deviceIndex === 1 ? position : position2;
+    const currentPos = deviceIndex === 1 ? (devicePosition1 || { x: 0, y: 0 }) : (devicePosition2 || { x: 0, y: 0 });
     posStart.current = { ...currentPos };
     setActiveDevice(deviceIndex);
   };
 
+  // 拖动图片（在设备内）- 双击切换
+  const handleMouseDown = (e, deviceIndex) => {
+    if (isEditingText || !moveMode) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const device = deviceIndex || 1;
+    setIsDragging(true);
+    setDragType('image');
+    draggingDevice.current = device;
+    dragStart.current = { x: e.clientX, y: e.clientY };
+    const currentPos = device === 1 ? position : position2;
+    posStart.current = { ...currentPos };
+    setActiveDevice(device);
+  };
+
   const handleMouseMove = (e) => {
     if (!isDragging || !moveMode) return;
-    const effectiveScale = scale * previewZoom;
-    const dx = (e.clientX - dragStart.current.x) / effectiveScale;
-    const dy = (e.clientY - dragStart.current.y) / effectiveScale;
+    const currentDevice = draggingDevice.current;
+    const dx = (e.clientX - dragStart.current.x) / previewZoom;
+    const dy = (e.clientY - dragStart.current.y) / previewZoom;
     const newPos = {
       x: Math.round(posStart.current.x + dx),
       y: Math.round(posStart.current.y + dy),
     };
-    if (activeDevice === 1) {
-      setPosition(newPos);
+    
+    if (dragType === 'device') {
+      if (currentDevice === 1) {
+        setDevicePosition1(newPos);
+      } else {
+        setDevicePosition2(newPos);
+      }
     } else {
-      setPosition2(newPos);
+      const effectiveScale = scale * previewZoom;
+      const imgDx = (e.clientX - dragStart.current.x) / effectiveScale;
+      const imgDy = (e.clientY - dragStart.current.y) / effectiveScale;
+      const imgPos = {
+        x: Math.round(posStart.current.x + imgDx),
+        y: Math.round(posStart.current.y + imgDy),
+      };
+      if (currentDevice === 1) {
+        setPosition(imgPos);
+      } else {
+        setPosition2(imgPos);
+      }
+    }
+  };
+  
+  // 设备缩放（滚轮在设备上）
+  const handleDeviceWheel = (e, deviceIndex) => {
+    if (!moveMode) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const delta = e.deltaY > 0 ? -0.05 : 0.05;
+    if (deviceIndex === 1) {
+      setDeviceScale1(prev => Math.max(0.3, Math.min(2, prev + delta)));
+    } else {
+      setDeviceScale2(prev => Math.max(0.3, Math.min(2, prev + delta)));
     }
   };
 
@@ -198,12 +255,13 @@ const PreviewArea = forwardRef(({
           style={{ transformStyle: 'preserve-3d' }}
         >
           <div 
-            className={`transition-all duration-500 ${moveMode ? 'cursor-move' : ''} ${moveMode && activeDevice === 1 ? 'ring-2 ring-foreground/50 ring-offset-4 ring-offset-transparent rounded-[44px]' : ''}`}
+            className={`transition-all duration-200 ${moveMode ? 'cursor-move' : ''} ${moveMode && activeDevice === 1 ? 'ring-2 ring-foreground/50 ring-offset-4 ring-offset-transparent rounded-[44px]' : ''}`}
             style={{ 
               transformStyle: 'preserve-3d',
-              transform: layout !== 'single' ? 'translateZ(20px)' : 'none'
+              transform: `translateZ(${layout !== 'single' ? 20 : 0}px) translate(${devicePosition1?.x || 0}px, ${devicePosition1?.y || 0}px) scale(${deviceScale1 || 1})`
             }}
-            onMouseDown={(e) => handleMouseDown(e, 1)}
+            onMouseDown={(e) => handleDeviceMouseDown(e, 1)}
+            onWheel={(e) => handleDeviceWheel(e, 1)}
           >
             <DeviceFrame 
               model={model} 
@@ -222,12 +280,13 @@ const PreviewArea = forwardRef(({
           
           {(layout === 'double' || layout === 'mixed') && (
             <div 
-              className={`transition-all duration-500 ${moveMode ? 'cursor-move' : ''} ${moveMode && activeDevice === 2 ? 'ring-2 ring-foreground/50 ring-offset-4 ring-offset-transparent rounded-[44px]' : ''}`}
+              className={`transition-all duration-200 ${moveMode ? 'cursor-move' : ''} ${moveMode && activeDevice === 2 ? 'ring-2 ring-foreground/50 ring-offset-4 ring-offset-transparent rounded-[44px]' : ''}`}
               style={{ 
                 transformStyle: 'preserve-3d',
-                transform: 'translateZ(-20px)'
+                transform: `translateZ(-20px) translate(${devicePosition2?.x || 0}px, ${devicePosition2?.y || 0}px) scale(${deviceScale2 || 1})`
               }}
-              onMouseDown={(e) => handleMouseDown(e, 2)}
+              onMouseDown={(e) => handleDeviceMouseDown(e, 2)}
+              onWheel={(e) => handleDeviceWheel(e, 2)}
             >
               <DeviceFrame 
                 model={layout === 'mixed' ? 'ipad-pro-13' : secondModel} 
@@ -262,7 +321,13 @@ const PreviewArea = forwardRef(({
       {/* 状态提示 */}
       <div className="absolute top-5 right-5 glass px-4 py-2 rounded-xl text-xs font-medium z-20 flex items-center gap-2">
         <ZoomIn size={12} className="text-muted-foreground" />
-        {moveMode && isDragging ? `拖拽设备 ${activeDevice}` : moveMode ? `移动模式 · 设备 ${activeDevice}` : isEditingText ? '编辑文字' : `${Math.round(previewZoom * 100)}%`}
+        {moveMode && isDragging && dragType === 'device' 
+          ? `拖拽设备 ${activeDevice} · ${Math.round((activeDevice === 1 ? deviceScale1 : deviceScale2) * 100)}%` 
+          : moveMode 
+            ? `移动模式 · 设备 ${activeDevice} · ${Math.round((activeDevice === 1 ? deviceScale1 : deviceScale2) * 100)}%` 
+            : isEditingText 
+              ? '编辑文字' 
+              : `${Math.round(previewZoom * 100)}%`}
       </div>
 
       {/* 移动模式按钮 */}
@@ -279,7 +344,8 @@ const PreviewArea = forwardRef(({
 
       {/* 快捷键提示 */}
       <div className="absolute bottom-5 left-5 glass px-4 py-2 rounded-xl text-[11px] z-20 text-muted-foreground font-medium">
-        <span className="opacity-60">Ctrl+滚轮</span> 缩放 · 
+        <span className="opacity-60">Ctrl+滚轮</span> 预览缩放 · 
+        {moveMode && <><span className="opacity-60">滚轮</span> 设备缩放 · </>}
         <span className="font-mono"> Ctrl+Z/Y</span> 撤销 ·
         <span className="font-mono"> Ctrl+E</span> 导出
       </div>
