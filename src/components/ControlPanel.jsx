@@ -103,7 +103,13 @@ export default function ControlPanel({
     }, {});
   }, []);
 
-  const brandNames = { apple: 'Apple', google: 'Pixel', samsung: 'Samsung' };
+  const brandNames = { 
+    apple: 'Apple', 
+    google: 'Pixel', 
+    samsung: 'Samsung',
+    mac: 'MacBook',
+    browser: '浏览器'
+  };
 
   const handleApplyPreset = (preset) => {
     saveHistory();

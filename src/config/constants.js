@@ -215,6 +215,135 @@ export const DEVICE_MODELS = {
       purple: '#b8a9c9',
       starlight: '#f5f0e8'
     }
+  },
+
+  // MacBook 系列
+  'macbook-pro-16': {
+    name: 'MacBook Pro 16"',
+    brand: 'mac',
+    deviceType: 'laptop',
+    ratio: 16 / 10,
+    bezelWidth: 12,
+    screenRadius: 10,
+    cornerRadius: 16,
+    islandType: 'notch',
+    notchWidth: 150,
+    frameColor: {
+      silver: '#e5e5ea',
+      space: '#1c1c1e'
+    }
+  },
+  'macbook-pro-14': {
+    name: 'MacBook Pro 14"',
+    brand: 'mac',
+    deviceType: 'laptop',
+    ratio: 16 / 10.5,
+    bezelWidth: 10,
+    screenRadius: 10,
+    cornerRadius: 14,
+    islandType: 'notch',
+    notchWidth: 130,
+    frameColor: {
+      silver: '#e5e5ea',
+      space: '#1c1c1e'
+    }
+  },
+  'macbook-air-15': {
+    name: 'MacBook Air 15"',
+    brand: 'mac',
+    deviceType: 'laptop',
+    ratio: 16 / 10,
+    bezelWidth: 10,
+    screenRadius: 10,
+    cornerRadius: 14,
+    islandType: 'notch',
+    notchWidth: 140,
+    frameColor: {
+      silver: '#e5e5ea',
+      midnight: '#1c1c1e',
+      starlight: '#f5f0e8',
+      skyblue: '#7ec8e3'
+    }
+  },
+  'macbook-air-13': {
+    name: 'MacBook Air 13"',
+    brand: 'mac',
+    deviceType: 'laptop',
+    ratio: 16 / 10,
+    bezelWidth: 8,
+    screenRadius: 8,
+    cornerRadius: 12,
+    islandType: 'notch',
+    notchWidth: 120,
+    frameColor: {
+      silver: '#e5e5ea',
+      midnight: '#1c1c1e',
+      starlight: '#f5f0e8',
+      skyblue: '#7ec8e3'
+    }
+  },
+
+  // 浏览器窗口
+  'browser-chrome': {
+    name: 'Chrome',
+    brand: 'browser',
+    deviceType: 'browser',
+    ratio: 16 / 10,
+    bezelWidth: 0,
+    screenRadius: 0,
+    cornerRadius: 12,
+    islandType: 'none',
+    browserStyle: 'chrome',
+    frameColor: {
+      light: '#ffffff',
+      dark: '#202124'
+    }
+  },
+  'browser-safari': {
+    name: 'Safari',
+    brand: 'browser',
+    deviceType: 'browser',
+    ratio: 16 / 10,
+    bezelWidth: 0,
+    screenRadius: 0,
+    cornerRadius: 12,
+    islandType: 'none',
+    browserStyle: 'safari',
+    frameColor: {
+      light: '#f5f5f7',
+      dark: '#1c1c1e'
+    }
+  },
+  'browser-arc': {
+    name: 'Arc',
+    brand: 'browser',
+    deviceType: 'browser',
+    ratio: 16 / 10,
+    bezelWidth: 0,
+    screenRadius: 0,
+    cornerRadius: 16,
+    islandType: 'none',
+    browserStyle: 'arc',
+    frameColor: {
+      light: '#ffffff',
+      purple: '#6b5ce7',
+      pink: '#ff6b9d'
+    }
+  },
+  'browser-minimal': {
+    name: '极简窗口',
+    brand: 'browser',
+    deviceType: 'browser',
+    ratio: 16 / 10,
+    bezelWidth: 0,
+    screenRadius: 8,
+    cornerRadius: 12,
+    islandType: 'none',
+    browserStyle: 'minimal',
+    frameColor: {
+      light: '#ffffff',
+      dark: '#1a1a1a'
+    }
   }
 };
 
