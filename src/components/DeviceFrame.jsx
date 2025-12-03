@@ -1,7 +1,17 @@
+import { memo, useMemo } from 'react';
 import { Smartphone, Tablet } from 'lucide-react';
 import { DEVICE_MODELS } from '../config/constants';
 
-export default function DeviceFrame({ 
+// 判断颜色是否为深色（移到组件外部避免重复创建）
+function isFrameDark(hex) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance < 0.5;
+}
+
+const DeviceFrame = memo(function DeviceFrame({ 
   model, 
   color, 
   image, 
@@ -15,21 +25,25 @@ export default function DeviceFrame({
   enableAnimation = false
 }) {
   const config = DEVICE_MODELS[model];
-  const frameHex = config.frameColor[color] || Object.values(config.frameColor)[0];
-  const isTablet = model.includes('ipad');
-  const isDarkFrame = isFrameDark(frameHex);
-
-  // 根据设备类型调整尺寸
-  const baseWidth = isTablet ? 380 : 320;
-  const deviceHeight = baseWidth / config.ratio;
-
-  // 横屏时交换宽高
-  const finalWidth = isLandscape ? deviceHeight : baseWidth;
-  const finalHeight = isLandscape ? baseWidth : deviceHeight;
-
-  // 计算按键颜色（基于边框颜色）
-  const buttonColor = isDarkFrame ? 'rgba(80,80,80,0.9)' : 'rgba(160,160,160,0.9)';
-  const buttonHighlight = isDarkFrame ? 'rgba(100,100,100,0.5)' : 'rgba(200,200,200,0.5)';
+  
+  // 使用 useMemo 缓存计算结果
+  const { frameHex, isTablet, isDarkFrame, finalWidth, finalHeight, buttonColor, buttonHighlight } = useMemo(() => {
+    const hex = config.frameColor[color] || Object.values(config.frameColor)[0];
+    const tablet = model.includes('ipad');
+    const darkFrame = isFrameDark(hex);
+    const baseWidth = tablet ? 380 : 320;
+    const deviceHeight = baseWidth / config.ratio;
+    
+    return {
+      frameHex: hex,
+      isTablet: tablet,
+      isDarkFrame: darkFrame,
+      finalWidth: isLandscape ? deviceHeight : baseWidth,
+      finalHeight: isLandscape ? baseWidth : deviceHeight,
+      buttonColor: darkFrame ? 'rgba(80,80,80,0.9)' : 'rgba(160,160,160,0.9)',
+      buttonHighlight: darkFrame ? 'rgba(100,100,100,0.5)' : 'rgba(200,200,200,0.5)',
+    };
+  }, [model, color, config, isLandscape]);
 
   return (
     <div 
@@ -331,13 +345,6 @@ export default function DeviceFrame({
       />
     </div>
   );
-}
+});
 
-// 判断颜色是否为深色
-function isFrameDark(hex) {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance < 0.5;
-}
+export default DeviceFrame;

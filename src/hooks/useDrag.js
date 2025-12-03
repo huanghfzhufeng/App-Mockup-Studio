@@ -1,8 +1,9 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 
 /**
  * 通用拖拽 hook
  * 支持设备拖拽和图片拖拽两种模式
+ * 使用 requestAnimationFrame 优化性能
  */
 export function useDrag({
   onDeviceDrag,
@@ -18,6 +19,17 @@ export function useDrag({
   const dragStart = useRef({ x: 0, y: 0 });
   const posStart = useRef({ x: 0, y: 0 });
   const draggingDevice = useRef(1);
+  const rafId = useRef(null);
+  const lastMousePos = useRef({ x: 0, y: 0 });
+
+  // 清理 RAF
+  useEffect(() => {
+    return () => {
+      if (rafId.current) {
+        cancelAnimationFrame(rafId.current);
+      }
+    };
+  }, []);
 
   // 开始拖拽设备
   const handleDeviceMouseDown = useCallback((e, deviceIndex, currentPosition) => {
@@ -45,12 +57,11 @@ export function useDrag({
     posStart.current = { ...currentPosition };
   }, [isEnabled]);
 
-  // 拖拽移动
-  const handleMouseMove = useCallback((e) => {
-    if (!isDragging || !isEnabled) return;
-    
-    const dx = e.clientX - dragStart.current.x;
-    const dy = e.clientY - dragStart.current.y;
+  // 使用 RAF 节流的更新函数
+  const updatePosition = useCallback(() => {
+    const { x, y } = lastMousePos.current;
+    const dx = x - dragStart.current.x;
+    const dy = y - dragStart.current.y;
     
     if (dragType === 'device') {
       const newPos = {
@@ -66,12 +77,30 @@ export function useDrag({
       };
       onImageDrag?.(draggingDevice.current, newPos);
     }
-  }, [isDragging, isEnabled, dragType, previewZoom, scale, onDeviceDrag, onImageDrag]);
+    
+    rafId.current = null;
+  }, [dragType, previewZoom, scale, onDeviceDrag, onImageDrag]);
+
+  // 拖拽移动 - 使用 RAF 节流
+  const handleMouseMove = useCallback((e) => {
+    if (!isDragging || !isEnabled) return;
+    
+    lastMousePos.current = { x: e.clientX, y: e.clientY };
+    
+    // 使用 RAF 节流，避免每次 mousemove 都触发更新
+    if (!rafId.current) {
+      rafId.current = requestAnimationFrame(updatePosition);
+    }
+  }, [isDragging, isEnabled, updatePosition]);
 
   // 结束拖拽
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
     setDragType(null);
+    if (rafId.current) {
+      cancelAnimationFrame(rafId.current);
+      rafId.current = null;
+    }
   }, []);
 
   // 滚轮缩放设备

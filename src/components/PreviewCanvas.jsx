@@ -1,11 +1,12 @@
-import { forwardRef } from 'react';
+import { forwardRef, memo, useMemo } from 'react';
 import DeviceFrame from './DeviceFrame';
 import TextAnnotation from './TextAnnotation';
 
 /**
  * 纯渲染组件 - 只负责展示，不处理交互逻辑
+ * 使用 memo 优化，避免不必要的重渲染
  */
-const PreviewCanvas = forwardRef(({
+const PreviewCanvas = memo(forwardRef(({
   // 背景
   background,
   customBgColor,
@@ -62,7 +63,8 @@ const PreviewCanvas = forwardRef(({
   onCanvasMouseDown,
 }, ref) => {
   
-  const getBackgroundStyle = () => {
+  // 使用 useMemo 缓存背景样式
+  const backgroundStyle = useMemo(() => {
     if (customBgImage) {
       return { backgroundImage: `url(${customBgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' };
     }
@@ -76,9 +78,10 @@ const PreviewCanvas = forwardRef(({
       return { backgroundImage: background.value, backgroundSize: 'cover', backgroundPosition: 'center' };
     }
     return { background: background.value };
-  };
+  }, [customBgImage, background, customBgColor, isDark]);
 
-  const getCanvasStyle = () => {
+  // 使用 useMemo 缓存画布尺寸
+  const canvasStyle = useMemo(() => {
     const baseWidth = layout === 'double' || layout === 'mixed' ? 900 : 600;
     
     if (exportRatio && exportRatio.ratio) {
@@ -93,7 +96,7 @@ const PreviewCanvas = forwardRef(({
       minWidth: `${baseWidth}px`,
       minHeight: '900px',
     };
-  };
+  }, [layout, exportRatio]);
 
   const secondImage = screenshot2 || screenshot;
 
@@ -102,8 +105,8 @@ const PreviewCanvas = forwardRef(({
       ref={ref}
       className={`relative shadow-2xl transition-all duration-500 overflow-hidden rounded-2xl ${moveMode && isDragging ? 'cursor-grabbing' : moveMode ? 'cursor-grab' : 'cursor-default'}`}
       style={{
-        ...getBackgroundStyle(),
-        ...getCanvasStyle(),
+        ...backgroundStyle,
+        ...canvasStyle,
         width: 'auto',
         display: 'flex',
         alignItems: 'center',
@@ -200,7 +203,7 @@ const PreviewCanvas = forwardRef(({
       )}
     </div>
   );
-});
+}));
 
 PreviewCanvas.displayName = 'PreviewCanvas';
 
