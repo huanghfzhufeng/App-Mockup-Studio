@@ -1,4 +1,5 @@
 import { forwardRef, memo, useMemo } from 'react';
+import PropTypes from 'prop-types';
 import DeviceFrame from './DeviceFrame';
 import TextAnnotation from './TextAnnotation';
 
@@ -206,5 +207,71 @@ const PreviewCanvas = memo(forwardRef(({
 }));
 
 PreviewCanvas.displayName = 'PreviewCanvas';
+
+PreviewCanvas.propTypes = {
+  // 背景
+  background: PropTypes.shape({
+    id: PropTypes.string,
+    type: PropTypes.string,
+    value: PropTypes.string,
+  }).isRequired,
+  customBgColor: PropTypes.string,
+  customBgImage: PropTypes.string,
+  isDark: PropTypes.bool,
+  
+  // 布局
+  layout: PropTypes.oneOf(['single', 'double', 'mixed']).isRequired,
+  exportRatio: PropTypes.shape({
+    id: PropTypes.string,
+    ratio: PropTypes.number,
+  }),
+  
+  // 设备配置
+  model: PropTypes.string.isRequired,
+  deviceColor: PropTypes.string.isRequired,
+  isLandscape: PropTypes.bool,
+  hasShadow: PropTypes.bool,
+  enableAnimation: PropTypes.bool,
+  
+  // 3D 效果
+  rotateX: PropTypes.number,
+  rotateY: PropTypes.number,
+  perspective: PropTypes.number,
+  
+  // 图片
+  screenshot: PropTypes.string,
+  screenshot2: PropTypes.string,
+  fitMode: PropTypes.oneOf(['cover', 'contain']),
+  scale: PropTypes.number,
+  position: PropTypes.shape({ x: PropTypes.number, y: PropTypes.number }),
+  position2: PropTypes.shape({ x: PropTypes.number, y: PropTypes.number }),
+  
+  // 设备位置缩放
+  devicePosition1: PropTypes.shape({ x: PropTypes.number, y: PropTypes.number }),
+  devicePosition2: PropTypes.shape({ x: PropTypes.number, y: PropTypes.number }),
+  deviceScale1: PropTypes.number,
+  deviceScale2: PropTypes.number,
+  
+  // 文字标注
+  annotation: PropTypes.object,
+  setAnnotation: PropTypes.func,
+  isEditingText: PropTypes.bool,
+  watermark: PropTypes.shape({
+    visible: PropTypes.bool,
+    text: PropTypes.string,
+    opacity: PropTypes.number,
+  }),
+  
+  // 交互状态
+  moveMode: PropTypes.bool,
+  activeDevice: PropTypes.number,
+  isDragging: PropTypes.bool,
+  previewZoom: PropTypes.number,
+  
+  // 事件处理
+  onDeviceMouseDown: PropTypes.func,
+  onDeviceWheel: PropTypes.func,
+  onCanvasMouseDown: PropTypes.func,
+};
 
 export default PreviewCanvas;

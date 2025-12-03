@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import PropTypes from 'prop-types';
 import { CheckCircle, XCircle, AlertCircle, Info, X } from 'lucide-react';
 
 // Toast 类型配置
@@ -50,6 +51,13 @@ function ToastItem({ id, type = 'info', message, onClose }) {
   );
 }
 
+ToastItem.propTypes = {
+  id: PropTypes.number.isRequired,
+  type: PropTypes.oneOf(['success', 'error', 'warning', 'info']),
+  message: PropTypes.string.isRequired,
+  onClose: PropTypes.func.isRequired,
+};
+
 // Toast 容器组件
 export function ToastContainer({ toasts, removeToast }) {
   if (toasts.length === 0) return null;
@@ -66,6 +74,17 @@ export function ToastContainer({ toasts, removeToast }) {
     </div>
   );
 }
+
+ToastContainer.propTypes = {
+  toasts: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      type: PropTypes.string,
+      message: PropTypes.string.isRequired,
+    })
+  ).isRequired,
+  removeToast: PropTypes.func.isRequired,
+};
 
 // Toast Hook
 let toastId = 0;

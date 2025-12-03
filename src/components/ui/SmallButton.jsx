@@ -1,3 +1,5 @@
+import PropTypes from 'prop-types';
+
 /**
  * 通用小按钮组件
  */
@@ -26,3 +28,11 @@ export default function SmallButton({
     </button>
   );
 }
+
+SmallButton.propTypes = {
+  active: PropTypes.bool,
+  children: PropTypes.node.isRequired,
+  onClick: PropTypes.func,
+  className: PropTypes.string,
+  disabled: PropTypes.bool,
+};
