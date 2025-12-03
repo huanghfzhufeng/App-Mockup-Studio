@@ -34,7 +34,7 @@ function Section({ title, icon: Icon, children, defaultOpen = true, badge }) {
             </div>
           )}
           <span className="text-sm font-medium text-foreground">{title}</span>
-          {badge && (
+          {badge !== undefined && (
             <span className="px-1.5 py-0.5 text-[10px] font-medium bg-foreground text-background rounded-full">
               {badge}
             </span>
@@ -51,6 +51,7 @@ function Section({ title, icon: Icon, children, defaultOpen = true, badge }) {
   );
 }
 
+
 export default function ControlPanel({
   onBgImageUpload,
   templates,
@@ -60,18 +61,6 @@ export default function ControlPanel({
 }) {
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState('');
-
-  const [showAddDeviceModal, setShowAddDeviceModal] = useState(false);
-  const [newDevice, setNewDevice] = useState({
-    name: '',
-    brand: 'custom',
-    ratio: 9 / 19.5,
-    bezelWidth: 12,
-    cornerRadius: 48,
-    screenRadius: 40,
-    islandType: 'dynamic-island',
-    frameColor: '#1c1c1e',
-  });
 
   // 从 store 获取状态
   const {
@@ -92,8 +81,6 @@ export default function ControlPanel({
     setRotateX,
     rotateY,
     setRotateY,
-    perspective,
-    setPerspective,
     applyPreset,
     annotation,
     updateAnnotation,
@@ -115,9 +102,6 @@ export default function ControlPanel({
     saveHistory,
     canvasSize,
     setCanvasSize,
-    customDevices,
-    addCustomDevice,
-    removeCustomDevice,
     // 画布设备管理
     canvasDevices,
     selectedDeviceId,
@@ -129,20 +113,15 @@ export default function ControlPanel({
     clearAllCanvasDevices,
   } = useAppStore();
 
-  // 合并内置机型和自定义机型
-  const allDevices = useMemo(() => {
-    return { ...DEVICE_MODELS, ...customDevices };
-  }, [customDevices]);
-
   // 缓存分组后的机型
   const groupedModels = useMemo(() => {
-    return Object.entries(allDevices).reduce((acc, [key, config]) => {
+    return Object.entries(DEVICE_MODELS).reduce((acc, [key, config]) => {
       const brand = config.brand || 'other';
       if (!acc[brand]) acc[brand] = [];
       acc[brand].push({ key, ...config });
       return acc;
     }, {});
-  }, [allDevices]);
+  }, []);
 
   const brandNames = { 
     apple: 'Apple', 
@@ -150,34 +129,6 @@ export default function ControlPanel({
     samsung: 'Samsung',
     mac: 'MacBook',
     browser: '浏览器',
-    custom: '自定义'
-  };
-
-  const handleAddDevice = () => {
-    if (!newDevice.name.trim()) return;
-    const id = `custom-${Date.now()}`;
-    addCustomDevice(id, {
-      name: newDevice.name,
-      brand: 'custom',
-      ratio: newDevice.ratio,
-      bezelWidth: newDevice.bezelWidth,
-      cornerRadius: newDevice.cornerRadius,
-      screenRadius: newDevice.screenRadius,
-      islandType: newDevice.islandType,
-      islandWidth: newDevice.islandType === 'dynamic-island' ? 95 : 0,
-      frameColor: { default: newDevice.frameColor },
-    });
-    setShowAddDeviceModal(false);
-    setNewDevice({
-      name: '',
-      brand: 'custom',
-      ratio: 9 / 19.5,
-      bezelWidth: 12,
-      cornerRadius: 48,
-      screenRadius: 40,
-      islandType: 'dynamic-island',
-      frameColor: '#1c1c1e',
-    });
   };
 
   const handleApplyPreset = (preset) => {
@@ -203,6 +154,7 @@ export default function ControlPanel({
     saveHistory();
     setter(value);
   };
+
 
   return (
     <div className="w-full md:w-[320px] border-r border-border/50 h-auto md:h-screen overflow-y-auto flex-shrink-0 z-20 bg-sidebar scrollbar-thin">
@@ -251,60 +203,101 @@ export default function ControlPanel({
       </div>
 
       <div>
-        {/* 模板 */}
-        <Section title="模板预设" icon={Layers} defaultOpen={false} badge={templates.length}>
-          <div className="flex flex-wrap gap-2">
-            {templates.map(template => (
-              <div key={template.id} className="relative group">
-                <button
-                  onClick={() => onApplyTemplate(template)}
-                  className="h-8 px-3 text-xs font-medium bg-secondary hover:bg-accent rounded-lg border border-border/50 hover:border-foreground/20 transition-all duration-200 btn-press"
-                >
-                  {template.name}
-                </button>
-                {template.isCustom && (
-                  <button 
-                    onClick={() => onDeleteTemplate(template.id)} 
-                    className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-foreground text-background rounded-full text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+        {/* 模板与布局 - 合并了模板预设和布局设置 */}
+        <Section title="模板与布局" icon={Layers} badge={templates.length}>
+          {/* 模板预设 */}
+          <div className="space-y-2">
+            <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">预设模板</div>
+            <div className="flex flex-wrap gap-2">
+              {templates.map(template => (
+                <div key={template.id} className="relative group">
+                  <button
+                    onClick={() => onApplyTemplate(template)}
+                    className="h-8 px-3 text-xs font-medium bg-secondary hover:bg-accent rounded-lg border border-border/50 hover:border-foreground/20 transition-all duration-200 btn-press"
                   >
-                    ×
+                    {template.name}
                   </button>
-                )}
-              </div>
-            ))}
-          </div>
-          <button 
-            onClick={() => setShowTemplateModal(true)} 
-            className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 mt-2 transition-colors"
-          >
-            <Save size={12} /> 保存当前配置为模板
-          </button>
-          {showTemplateModal && (
-            <div className="mt-3 p-3 rounded-xl bg-secondary/50 border border-border/50">
-              <input 
-                type="text" 
-                value={newTemplateName} 
-                onChange={(e) => setNewTemplateName(e.target.value)} 
-                placeholder="输入模板名称" 
-                className="w-full h-8 text-sm px-3 rounded-lg bg-background border border-border focus:border-foreground/30 mb-2" 
-              />
-              <div className="flex gap-2">
-                <button onClick={handleSaveTemplate} className="h-7 px-3 text-xs font-medium bg-foreground text-background rounded-lg btn-press">保存</button>
-                <button onClick={() => setShowTemplateModal(false)} className="h-7 px-3 text-xs font-medium bg-secondary rounded-lg btn-press">取消</button>
-              </div>
+                  {template.isCustom && (
+                    <button 
+                      onClick={() => onDeleteTemplate(template.id)} 
+                      className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-foreground text-background rounded-full text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
-          )}
+            <button 
+              onClick={() => setShowTemplateModal(true)} 
+              className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition-colors"
+            >
+              <Save size={12} /> 保存当前配置为模板
+            </button>
+            {showTemplateModal && (
+              <div className="mt-2 p-3 rounded-xl bg-secondary/50 border border-border/50">
+                <input 
+                  type="text" 
+                  value={newTemplateName} 
+                  onChange={(e) => setNewTemplateName(e.target.value)} 
+                  placeholder="输入模板名称" 
+                  className="w-full h-8 text-sm px-3 rounded-lg bg-background border border-border focus:border-foreground/30 mb-2" 
+                />
+                <div className="flex gap-2">
+                  <button onClick={handleSaveTemplate} className="h-7 px-3 text-xs font-medium bg-foreground text-background rounded-lg btn-press">保存</button>
+                  <button onClick={() => setShowTemplateModal(false)} className="h-7 px-3 text-xs font-medium bg-secondary rounded-lg btn-press">取消</button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          
+          {/* 布局模式 */}
+          <div className="space-y-2 pt-3 border-t border-border/50">
+            <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">布局模式</div>
+            <div className="flex gap-1.5">
+              {LAYOUT_MODES.map(mode => (
+                <SmallButton 
+                  key={mode.id} 
+                  active={layout === mode.id}
+                  onClick={() => withHistory(setLayout)(mode.id)}
+                  className="flex-1"
+                >
+                  {mode.icon} {mode.name}
+                </SmallButton>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-x-4 gap-y-2 pt-2">
+              <label className="flex items-center gap-2 text-xs cursor-pointer text-foreground">
+                <input type="checkbox" checked={hasShadow} onChange={(e) => withHistory(setHasShadow)(e.target.checked)} />
+                <span>投影</span>
+              </label>
+              <label className="flex items-center gap-2 text-xs cursor-pointer text-foreground">
+                <input type="checkbox" checked={isLandscape} onChange={(e) => withHistory(setIsLandscape)(e.target.checked)} />
+                <RotateCw size={10} className="text-muted-foreground" />
+                <span>横屏</span>
+              </label>
+              <label className="flex items-center gap-2 text-xs cursor-pointer text-foreground">
+                <input type="checkbox" checked={enableAnimation} onChange={(e) => setEnableAnimation(e.target.checked)} />
+                <Sparkles size={10} className="text-muted-foreground" />
+                <span>动画</span>
+              </label>
+            </div>
+          </div>
         </Section>
 
-        {/* 机型 */}
-        <Section title="机型选择" icon={Smartphone}>
-          {Object.entries(groupedModels).map(([brand, models]) => (
-            <div key={brand} className="mb-3 last:mb-0">
-              <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">{brandNames[brand]}</div>
-              <div className="grid grid-cols-2 gap-1.5">
-                {models.map(({ key, name, isCustom }) => (
-                  <div key={key} className="relative group">
+        {/* 设备管理 - 合并了机型选择和画布设备 */}
+        <Section title="设备管理" icon={Smartphone} badge={canvasDevices?.length || 0}>
+          {/* 机型选择 */}
+          <div className="space-y-2">
+            <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">当前机型</div>
+            {Object.entries(groupedModels).map(([brand, models]) => (
+              <div key={brand} className="mb-2 last:mb-0">
+                <div className="text-[10px] text-muted-foreground mb-1.5">{brandNames[brand]}</div>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {models.map(({ key, name }) => (
                     <button 
+                      key={key}
                       onClick={() => { saveHistory(); setModel(key); }}
                       className={`
                         w-full text-xs h-8 px-2 rounded-lg truncate transition-all duration-200 btn-press font-medium
@@ -316,118 +309,162 @@ export default function ControlPanel({
                     >
                       {name}
                     </button>
-                    {isCustom && (
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); removeCustomDevice(key); }}
-                        className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-[10px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-                      >
-                        ×
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-          
-          {/* 添加自定义机型按钮 */}
-          <button 
-            onClick={() => setShowAddDeviceModal(true)}
-            className="w-full h-8 text-xs font-medium rounded-lg bg-secondary hover:bg-accent border border-dashed border-border hover:border-foreground/30 flex items-center justify-center gap-1.5 transition-all duration-200 mt-2"
-          >
-            <Plus size={12} /> 添加自定义机型
-          </button>
-          
-          {/* 添加机型弹窗 */}
-          {showAddDeviceModal && (
-            <div className="mt-3 p-3 rounded-xl bg-secondary/50 border border-border/50 space-y-2">
-              <input 
-                type="text" 
-                value={newDevice.name} 
-                onChange={(e) => setNewDevice({ ...newDevice, name: e.target.value })} 
-                placeholder="机型名称" 
-                className="w-full h-8 text-sm px-3 rounded-lg bg-background border border-border focus:border-foreground/30" 
-              />
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-[10px] text-muted-foreground">屏幕比例</label>
-                  <select 
-                    value={newDevice.ratio}
-                    onChange={(e) => setNewDevice({ ...newDevice, ratio: parseFloat(e.target.value) })}
-                    className="w-full h-8 text-xs px-2 rounded-lg bg-background border border-border"
-                  >
-                    <option value={9/19.5}>9:19.5 (iPhone)</option>
-                    <option value={9/20}>9:20 (Android)</option>
-                    <option value={3/4}>3:4 (iPad)</option>
-                    <option value={9/16}>9:16 (标准)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-[10px] text-muted-foreground">刘海类型</label>
-                  <select 
-                    value={newDevice.islandType}
-                    onChange={(e) => setNewDevice({ ...newDevice, islandType: e.target.value })}
-                    className="w-full h-8 text-xs px-2 rounded-lg bg-background border border-border"
-                  >
-                    <option value="dynamic-island">灵动岛</option>
-                    <option value="punch-hole">挖孔</option>
-                    <option value="none">无</option>
-                  </select>
+                  ))}
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-[10px] text-muted-foreground">边框宽度</label>
-                  <input 
-                    type="number" 
-                    value={newDevice.bezelWidth}
-                    onChange={(e) => setNewDevice({ ...newDevice, bezelWidth: parseInt(e.target.value) })}
-                    className="w-full h-8 text-xs px-2 rounded-lg bg-background border border-border"
-                    min="4" max="30"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] text-muted-foreground">圆角</label>
-                  <input 
-                    type="number" 
-                    value={newDevice.cornerRadius}
-                    onChange={(e) => setNewDevice({ ...newDevice, cornerRadius: parseInt(e.target.value) })}
-                    className="w-full h-8 text-xs px-2 rounded-lg bg-background border border-border"
-                    min="0" max="60"
-                  />
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <label className="text-[10px] text-muted-foreground">边框颜色</label>
-                <input 
-                  type="color" 
-                  value={newDevice.frameColor}
-                  onChange={(e) => setNewDevice({ ...newDevice, frameColor: e.target.value })}
-                  className="w-8 h-8 rounded-lg cursor-pointer"
+            ))}
+            
+            {/* 颜色选择 */}
+            <div className="flex flex-wrap gap-2 pt-2 border-t border-border/50">
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider w-full mb-1">颜色</span>
+              {DEVICE_MODELS[model]?.frameColor && Object.keys(DEVICE_MODELS[model].frameColor).map((colorKey) => (
+                <button 
+                  key={colorKey} 
+                  onClick={() => { saveHistory(); setDeviceColor(colorKey); }}
+                  className={`
+                    w-7 h-7 rounded-full transition-all duration-200 btn-press
+                    ${deviceColor === colorKey ? 'ring-2 ring-foreground ring-offset-2 ring-offset-background scale-110' : 'hover:scale-105'}
+                  `}
+                  style={{ backgroundColor: DEVICE_MODELS[model].frameColor[colorKey], boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }} 
+                  title={colorKey} 
                 />
+              ))}
+            </div>
+          </div>
+
+          
+          {/* 画布设备 */}
+          <div className="space-y-2 pt-3 border-t border-border/50">
+            <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">画布设备</div>
+            <div className="grid grid-cols-3 gap-1.5">
+              {['iphone-16', 'iphone-15-pro', 'pixel-9-pro', 'galaxy-s24-ultra', 'ipad-pro-13', 'macbook-pro-16'].map(deviceModel => (
+                <button
+                  key={deviceModel}
+                  onClick={() => addDeviceToCanvas(deviceModel)}
+                  className="text-[10px] h-7 px-1.5 rounded-lg bg-secondary hover:bg-accent border border-border/50 hover:border-foreground/20 transition-all duration-200 btn-press font-medium truncate"
+                  title={DEVICE_MODELS[deviceModel]?.name}
+                >
+                  {DEVICE_MODELS[deviceModel]?.name?.replace('iPhone ', '').replace('Galaxy ', '').replace('MacBook ', '')}
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          {/* 已添加的设备列表 */}
+          {canvasDevices?.length > 0 && (
+            <div className="space-y-2 pt-3 border-t border-border/50">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">已添加 ({canvasDevices.length})</span>
+                <button 
+                  onClick={clearAllCanvasDevices}
+                  className="text-[10px] text-red-500 hover:text-red-400 transition-colors"
+                >
+                  清空全部
+                </button>
               </div>
-              <div className="flex gap-2 pt-1">
-                <button onClick={handleAddDevice} className="h-7 px-3 text-xs font-medium bg-foreground text-background rounded-lg btn-press">添加</button>
-                <button onClick={() => setShowAddDeviceModal(false)} className="h-7 px-3 text-xs font-medium bg-secondary rounded-lg btn-press">取消</button>
+              <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
+                {canvasDevices.map((device, index) => {
+                  const deviceConfig = DEVICE_MODELS[device.model];
+                  return (
+                    <div 
+                      key={device.id}
+                      onClick={() => selectCanvasDevice(device.id)}
+                      className={`
+                        flex items-center justify-between p-2 rounded-lg cursor-pointer transition-all duration-200
+                        ${selectedDeviceId === device.id 
+                          ? 'bg-foreground/10 border border-foreground/30' 
+                          : 'bg-secondary/50 hover:bg-secondary border border-transparent'
+                        }
+                      `}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-[10px] text-muted-foreground w-4">{index + 1}</span>
+                        <span className="text-xs font-medium truncate">{deviceConfig?.name || device.model}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); duplicateCanvasDevice(device.id); }}
+                          className="w-6 h-6 rounded flex items-center justify-center hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+                          title="复制"
+                        >
+                          <Plus size={12} />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); removeDeviceFromCanvas(device.id); }}
+                          className="w-6 h-6 rounded flex items-center justify-center hover:bg-red-500/20 text-muted-foreground hover:text-red-500 transition-colors"
+                          title="删除"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
+
           
-          <div className="flex flex-wrap gap-2 pt-3 border-t border-border/50">
-            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider w-full mb-1">颜色</span>
-            {allDevices[model]?.frameColor && Object.keys(allDevices[model].frameColor).map((colorKey) => (
-              <button 
-                key={colorKey} 
-                onClick={() => { saveHistory(); setDeviceColor(colorKey); }}
-                className={`
-                  w-7 h-7 rounded-full transition-all duration-200 btn-press
-                  ${deviceColor === colorKey ? 'ring-2 ring-foreground ring-offset-2 ring-offset-background scale-110' : 'hover:scale-105'}
-                `}
-                style={{ backgroundColor: allDevices[model].frameColor[colorKey], boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }} 
-                title={colorKey} 
-              />
-            ))}
-          </div>
+          {/* 选中设备的配置 */}
+          {selectedDeviceId && canvasDevices?.find(d => d.id === selectedDeviceId) && (
+            <div className="space-y-2 pt-3 border-t border-border/50">
+              <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">设备配置</div>
+              {(() => {
+                const device = canvasDevices.find(d => d.id === selectedDeviceId);
+                const deviceConfig = DEVICE_MODELS[device.model];
+                return (
+                  <div className="space-y-2 p-2 rounded-lg bg-secondary/30">
+                    {/* 机型切换 */}
+                    <select
+                      value={device.model}
+                      onChange={(e) => updateCanvasDevice(device.id, { 
+                        model: e.target.value,
+                        color: Object.keys(DEVICE_MODELS[e.target.value]?.frameColor || {})[0] || 'black'
+                      })}
+                      className="w-full h-8 text-xs px-2 rounded-lg bg-background border border-border"
+                    >
+                      {Object.entries(DEVICE_MODELS).map(([key, config]) => (
+                        <option key={key} value={key}>{config.name}</option>
+                      ))}
+                    </select>
+                    {/* 颜色选择 */}
+                    <div className="flex flex-wrap gap-1.5">
+                      {deviceConfig?.frameColor && Object.keys(deviceConfig.frameColor).map((colorKey) => (
+                        <button 
+                          key={colorKey}
+                          onClick={() => updateCanvasDevice(device.id, { color: colorKey })}
+                          className={`w-6 h-6 rounded-full transition-all ${device.color === colorKey ? 'ring-2 ring-foreground ring-offset-1 ring-offset-background scale-110' : 'hover:scale-105'}`}
+                          style={{ backgroundColor: deviceConfig.frameColor[colorKey] }}
+                          title={colorKey}
+                        />
+                      ))}
+                    </div>
+                    {/* 缩放 */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-muted-foreground w-8">缩放</span>
+                      <input 
+                        type="range" 
+                        min="0.3" max="2" step="0.1"
+                        value={device.scale}
+                        onChange={(e) => updateCanvasDevice(device.id, { scale: parseFloat(e.target.value) })}
+                        className="flex-1"
+                      />
+                      <span className="text-[10px] font-mono w-10 text-right">{Math.round(device.scale * 100)}%</span>
+                    </div>
+                    {/* 横屏 */}
+                    <label className="flex items-center gap-2 text-xs cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={device.isLandscape}
+                        onChange={(e) => updateCanvasDevice(device.id, { isLandscape: e.target.checked })}
+                      />
+                      <span>横屏模式</span>
+                    </label>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
         </Section>
 
         {/* 画布尺寸 */}
@@ -481,172 +518,6 @@ export default function ControlPanel({
           )}
         </Section>
 
-        {/* 画布设备管理 */}
-        <Section title="画布设备" icon={Layers} badge={canvasDevices?.length || 0}>
-          {/* 快速添加设备 */}
-          <div className="space-y-2">
-            <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">快速添加</div>
-            <div className="grid grid-cols-3 gap-1.5">
-              {['iphone-16', 'iphone-15-pro', 'pixel-9-pro', 'galaxy-s24-ultra', 'ipad-pro-13', 'macbook-pro-16'].map(deviceModel => (
-                <button
-                  key={deviceModel}
-                  onClick={() => addDeviceToCanvas(deviceModel)}
-                  className="text-[10px] h-7 px-1.5 rounded-lg bg-secondary hover:bg-accent border border-border/50 hover:border-foreground/20 transition-all duration-200 btn-press font-medium truncate"
-                  title={DEVICE_MODELS[deviceModel]?.name}
-                >
-                  {DEVICE_MODELS[deviceModel]?.name?.replace('iPhone ', '').replace('Galaxy ', '').replace('MacBook ', '')}
-                </button>
-              ))}
-            </div>
-          </div>
-          
-          {/* 已添加的设备列表 */}
-          {canvasDevices?.length > 0 && (
-            <div className="space-y-2 pt-3 border-t border-border/50">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">已添加 ({canvasDevices.length})</span>
-                <button 
-                  onClick={clearAllCanvasDevices}
-                  className="text-[10px] text-red-500 hover:text-red-400 transition-colors"
-                >
-                  清空全部
-                </button>
-              </div>
-              <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
-                {canvasDevices.map((device, index) => {
-                  const deviceConfig = allDevices[device.model];
-                  return (
-                    <div 
-                      key={device.id}
-                      onClick={() => selectCanvasDevice(device.id)}
-                      className={`
-                        flex items-center justify-between p-2 rounded-lg cursor-pointer transition-all duration-200
-                        ${selectedDeviceId === device.id 
-                          ? 'bg-foreground/10 border border-foreground/30' 
-                          : 'bg-secondary/50 hover:bg-secondary border border-transparent'
-                        }
-                      `}
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-[10px] text-muted-foreground w-4">{index + 1}</span>
-                        <span className="text-xs font-medium truncate">{deviceConfig?.name || device.model}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); duplicateCanvasDevice(device.id); }}
-                          className="w-6 h-6 rounded flex items-center justify-center hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
-                          title="复制"
-                        >
-                          <Plus size={12} />
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); removeDeviceFromCanvas(device.id); }}
-                          className="w-6 h-6 rounded flex items-center justify-center hover:bg-red-500/20 text-muted-foreground hover:text-red-500 transition-colors"
-                          title="删除"
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-          
-          {/* 选中设备的配置 */}
-          {selectedDeviceId && canvasDevices?.find(d => d.id === selectedDeviceId) && (
-            <div className="space-y-2 pt-3 border-t border-border/50">
-              <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">设备配置</div>
-              {(() => {
-                const device = canvasDevices.find(d => d.id === selectedDeviceId);
-                const deviceConfig = allDevices[device.model];
-                return (
-                  <div className="space-y-2 p-2 rounded-lg bg-secondary/30">
-                    {/* 机型切换 */}
-                    <select
-                      value={device.model}
-                      onChange={(e) => updateCanvasDevice(device.id, { 
-                        model: e.target.value,
-                        color: Object.keys(allDevices[e.target.value]?.frameColor || {})[0] || 'black'
-                      })}
-                      className="w-full h-8 text-xs px-2 rounded-lg bg-background border border-border"
-                    >
-                      {Object.entries(allDevices).map(([key, config]) => (
-                        <option key={key} value={key}>{config.name}</option>
-                      ))}
-                    </select>
-                    {/* 颜色选择 */}
-                    <div className="flex flex-wrap gap-1.5">
-                      {deviceConfig?.frameColor && Object.keys(deviceConfig.frameColor).map((colorKey) => (
-                        <button 
-                          key={colorKey}
-                          onClick={() => updateCanvasDevice(device.id, { color: colorKey })}
-                          className={`w-6 h-6 rounded-full transition-all ${device.color === colorKey ? 'ring-2 ring-foreground ring-offset-1 ring-offset-background scale-110' : 'hover:scale-105'}`}
-                          style={{ backgroundColor: deviceConfig.frameColor[colorKey] }}
-                          title={colorKey}
-                        />
-                      ))}
-                    </div>
-                    {/* 缩放 */}
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-muted-foreground w-8">缩放</span>
-                      <input 
-                        type="range" 
-                        min="0.3" max="2" step="0.1"
-                        value={device.scale}
-                        onChange={(e) => updateCanvasDevice(device.id, { scale: parseFloat(e.target.value) })}
-                        className="flex-1"
-                      />
-                      <span className="text-[10px] font-mono w-10 text-right">{Math.round(device.scale * 100)}%</span>
-                    </div>
-                    {/* 横屏 */}
-                    <label className="flex items-center gap-2 text-xs cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        checked={device.isLandscape}
-                        onChange={(e) => updateCanvasDevice(device.id, { isLandscape: e.target.checked })}
-                      />
-                      <span>横屏模式</span>
-                    </label>
-                  </div>
-                );
-              })()}
-            </div>
-          )}
-        </Section>
-
-        {/* 布局 */}
-        <Section title="布局设置" icon={Layout}>
-          <div className="flex gap-1.5">
-            {LAYOUT_MODES.map(mode => (
-              <SmallButton 
-                key={mode.id} 
-                active={layout === mode.id}
-                onClick={() => withHistory(setLayout)(mode.id)}
-                className="flex-1"
-              >
-                {mode.icon} {mode.name}
-              </SmallButton>
-            ))}
-          </div>
-          <div className="flex flex-wrap gap-x-4 gap-y-2 pt-3">
-            <label className="flex items-center gap-2 text-xs cursor-pointer text-foreground">
-              <input type="checkbox" checked={hasShadow} onChange={(e) => withHistory(setHasShadow)(e.target.checked)} />
-              <span>投影</span>
-            </label>
-            <label className="flex items-center gap-2 text-xs cursor-pointer text-foreground">
-              <input type="checkbox" checked={isLandscape} onChange={(e) => withHistory(setIsLandscape)(e.target.checked)} />
-              <RotateCw size={10} className="text-muted-foreground" />
-              <span>横屏</span>
-            </label>
-            <label className="flex items-center gap-2 text-xs cursor-pointer text-foreground">
-              <input type="checkbox" checked={enableAnimation} onChange={(e) => setEnableAnimation(e.target.checked)} />
-              <Sparkles size={10} className="text-muted-foreground" />
-              <span>动画</span>
-            </label>
-          </div>
-        </Section>
 
         {/* 3D 效果 */}
         <Section title="3D 效果" icon={Box}>
@@ -772,6 +643,7 @@ export default function ControlPanel({
             )}
           </div>
         </Section>
+
 
         {/* 水印 */}
         <Section title="水印" icon={Type} defaultOpen={false}>

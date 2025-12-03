@@ -163,31 +163,7 @@ const createLayoutSlice = (set) => ({
   })),
 });
 
-// 自定义机型 slice
-const createCustomDeviceSlice = (set, get) => ({
-  customDevices: {},
-  
-  // 添加自定义机型
-  addCustomDevice: (id, config) => set((state) => ({
-    customDevices: { ...state.customDevices, [id]: { ...config, isCustom: true } }
-  })),
-  
-  // 删除自定义机型
-  removeCustomDevice: (id) => set((state) => {
-    const { [id]: removed, ...rest } = state.customDevices;
-    // 如果当前选中的是被删除的机型，切换到默认机型
-    if (state.model === id) {
-      return { customDevices: rest, model: DEFAULT_CONFIG.model };
-    }
-    return { customDevices: rest };
-  }),
-  
-  // 获取所有机型（内置 + 自定义）
-  getAllDevices: () => {
-    const state = get();
-    return { ...DEVICE_MODELS, ...state.customDevices };
-  },
-});
+
 
 
 // 文字标注 slice
@@ -324,7 +300,6 @@ export const useAppStore = create(
       ...createExportSlice(set),
       ...createUISlice(set, get),
       ...createHistorySlice(set, get),
-      ...createCustomDeviceSlice(set, get),
     }),
     {
       name: 'mockup-storage',
@@ -345,7 +320,6 @@ export const useAppStore = create(
         watermark: state.watermark,
         annotation: state.annotation,
         canvasSize: state.canvasSize,
-        customDevices: state.customDevices,
       }),
     }
   )
