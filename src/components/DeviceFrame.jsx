@@ -34,79 +34,315 @@ function DeviceButton({ position, size, direction, buttonColor, buttonHighlight 
   );
 }
 
-// MacBook 组件 - 更真实的设计
+// MacBook 组件 - 优化 3D 结构和转轴效果
 function MacBookFrame({ config, frameHex, isDarkFrame, image, fitMode, scale, position, hasShadow, rotateX, rotateY, enableAnimation }) {
-  const screenWidth = 560;
-  const screenHeight = screenWidth / config.ratio;
-  const bezelSize = 8;
-  const bottomBezel = 24; // 底部边框更宽（放logo的地方）
-  const lidThickness = 8;
-  const baseHeight = 10;
-  const hingeHeight = 6;
+  const baseWidth = 580;
+  const baseDepth = 380;
+  const screenWidth = baseWidth;
+  const screenHeight = (baseWidth - 20) / config.ratio + 20;
+  const baseHeight = 14;
+  const screenThickness = 6;
+  const openAngle = 110;
 
-  // 颜色计算
-  const darkerFrame = isDarkFrame ? '#0a0a0a' : '#b8b8b8';
-  const lighterFrame = isDarkFrame ? '#3a3a3a' : '#e8e8e8';
+  const darkerFrame = isDarkFrame ? '#111' : '#999';
 
   return (
     <div 
       className={`relative select-none transition-all duration-500 ${enableAnimation ? 'animate-float' : ''}`}
       style={{
+        width: `${baseWidth}px`,
+        height: `${baseDepth}px`,
         transformStyle: 'preserve-3d',
-        transform: `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
-        perspective: '1200px',
+        transform: `rotateX(${55 + rotateX}deg) rotateY(${rotateY}deg) rotateZ(0deg)`,
+        perspective: '2000px',
       }}
     >
-      {/* ===== 屏幕盖（上半部分）===== */}
-      <div 
-        className="relative"
-        style={{
-          width: `${screenWidth + bezelSize * 2}px`,
-          height: `${screenHeight + bezelSize + bottomBezel}px`,
-          background: `linear-gradient(180deg, ${lighterFrame} 0%, ${frameHex} 3%, ${frameHex} 97%, ${darkerFrame} 100%)`,
-          borderRadius: '12px 12px 2px 2px',
-          boxShadow: hasShadow 
-            ? `
-              inset 0 1px 0 rgba(255,255,255,${isDarkFrame ? 0.1 : 0.4}),
-              inset 0 -1px 0 rgba(0,0,0,0.2),
-              0 ${15 + rotateX}px ${35 + Math.abs(rotateY)}px -8px rgba(0,0,0,0.45)
-            `
-            : `inset 0 1px 0 rgba(255,255,255,${isDarkFrame ? 0.1 : 0.3})`,
-          transformStyle: 'preserve-3d',
-        }}
-      >
-        {/* 屏幕外框金属质感 */}
+      {/* ==================== 键盘底座 (Base) ==================== */}
+      <div className="absolute inset-0" style={{ transformStyle: 'preserve-3d' }}>
+        {/* 1. 底座顶面 (C面) */}
         <div 
-          className="absolute inset-0 rounded-[inherit] pointer-events-none"
+          className="absolute inset-0"
           style={{
-            background: `linear-gradient(${100 + rotateY}deg, rgba(255,255,255,${isDarkFrame ? 0.08 : 0.2}) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.1) 100%)`,
+            background: frameHex,
+            borderRadius: '4px 4px 18px 18px',
+            boxShadow: hasShadow ? `inset 0 1px 0 rgba(255,255,255,${isDarkFrame ? 0.1 : 0.4})` : 'none',
+          }}
+        >
+          {/* 键盘区域 */}
+          <div 
+            className="absolute rounded-md overflow-hidden"
+            style={{
+              top: '25px',
+              left: '30px',
+              right: '30px',
+              bottom: '125px',
+              background: 'linear-gradient(180deg, #0a0a0a 0%, #050505 100%)',
+              boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.8), inset 0 0 1px rgba(255,255,255,0.05)',
+              padding: '8px 6px',
+            }}
+          >
+            {/* Touch Bar / 功能键行 */}
+            <div 
+              className="flex items-center justify-between mb-2 rounded-sm overflow-hidden"
+              style={{
+                height: '18px',
+                background: 'linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%)',
+                boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.03)',
+                padding: '0 4px',
+              }}
+            >
+              {/* ESC 键 */}
+              <div 
+                className="h-[12px] w-[28px] rounded-sm flex items-center justify-center"
+                style={{
+                  background: 'linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%)',
+                  boxShadow: '0 1px 0 rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08)',
+                }}
+              >
+                <span className="text-[5px] text-gray-400 font-medium">esc</span>
+              </div>
+              {/* Touch Bar 区域 */}
+              <div 
+                className="flex-1 mx-2 h-[14px] rounded-sm"
+                style={{
+                  background: 'linear-gradient(90deg, #0f0f0f 0%, #1a1a1a 50%, #0f0f0f 100%)',
+                  boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.6)',
+                }}
+              />
+              {/* 电源/Touch ID */}
+              <div 
+                className="h-[12px] w-[28px] rounded-sm flex items-center justify-center"
+                style={{
+                  background: 'linear-gradient(180deg, #1f1f1f 0%, #151515 100%)',
+                  boxShadow: '0 1px 0 rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.05)',
+                }}
+              >
+                <div className="w-[8px] h-[8px] rounded-full bg-[#0a0a0a] border border-[#333]" />
+              </div>
+            </div>
+            
+            {/* 主键盘区域 */}
+            <div className="space-y-[3px]">
+              {/* 数字行 */}
+              <div className="flex gap-[3px]">
+                {['`', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '⌫'].map((key, i) => (
+                  <div 
+                    key={`num-${i}`}
+                    className="h-[20px] rounded-[3px] flex items-center justify-center relative"
+                    style={{
+                      flex: i === 13 ? 1.6 : 1,
+                      background: 'linear-gradient(180deg, #3a3a3a 0%, #2a2a2a 40%, #252525 100%)',
+                      boxShadow: '0 2px 0 #151515, 0 3px 2px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
+                    }}
+                  >
+                    <span className="text-[7px] text-gray-300 font-medium">{key}</span>
+                  </div>
+                ))}
+              </div>
+              
+              {/* QWERTY 行 */}
+              <div className="flex gap-[3px]">
+                {['⇥', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '[', ']', '\\'].map((key, i) => (
+                  <div 
+                    key={`q-${i}`}
+                    className="h-[20px] rounded-[3px] flex items-center justify-center"
+                    style={{
+                      flex: i === 0 ? 1.5 : i === 13 ? 1.5 : 1,
+                      background: 'linear-gradient(180deg, #3a3a3a 0%, #2a2a2a 40%, #252525 100%)',
+                      boxShadow: '0 2px 0 #151515, 0 3px 2px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
+                    }}
+                  >
+                    <span className="text-[7px] text-gray-300 font-medium">{key}</span>
+                  </div>
+                ))}
+              </div>
+              
+              {/* ASDF 行 */}
+              <div className="flex gap-[3px]">
+                {['⇪', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ';', "'", '↵'].map((key, i) => (
+                  <div 
+                    key={`a-${i}`}
+                    className="h-[20px] rounded-[3px] flex items-center justify-center"
+                    style={{
+                      flex: i === 0 ? 1.8 : i === 12 ? 2.2 : 1,
+                      background: 'linear-gradient(180deg, #3a3a3a 0%, #2a2a2a 40%, #252525 100%)',
+                      boxShadow: '0 2px 0 #151515, 0 3px 2px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
+                    }}
+                  >
+                    <span className="text-[7px] text-gray-300 font-medium">{key}</span>
+                  </div>
+                ))}
+              </div>
+              
+              {/* ZXCV 行 */}
+              <div className="flex gap-[3px]">
+                {['⇧', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '/', '⇧'].map((key, i) => (
+                  <div 
+                    key={`z-${i}`}
+                    className="h-[20px] rounded-[3px] flex items-center justify-center"
+                    style={{
+                      flex: i === 0 ? 2.3 : i === 11 ? 2.7 : 1,
+                      background: 'linear-gradient(180deg, #3a3a3a 0%, #2a2a2a 40%, #252525 100%)',
+                      boxShadow: '0 2px 0 #151515, 0 3px 2px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
+                    }}
+                  >
+                    <span className="text-[7px] text-gray-300 font-medium">{key}</span>
+                  </div>
+                ))}
+              </div>
+              
+              {/* 空格行 */}
+              <div className="flex gap-[3px]">
+                {['fn', '⌃', '⌥', '⌘'].map((key, i) => (
+                  <div 
+                    key={`mod-${i}`}
+                    className="h-[20px] rounded-[3px] flex items-center justify-center"
+                    style={{
+                      flex: i === 3 ? 1.3 : 1,
+                      background: 'linear-gradient(180deg, #3a3a3a 0%, #2a2a2a 40%, #252525 100%)',
+                      boxShadow: '0 2px 0 #151515, 0 3px 2px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
+                    }}
+                  >
+                    <span className="text-[6px] text-gray-400 font-medium">{key}</span>
+                  </div>
+                ))}
+                {/* 空格键 */}
+                <div 
+                  className="h-[20px] rounded-[3px] flex-[5]"
+                  style={{
+                    background: 'linear-gradient(180deg, #3a3a3a 0%, #2a2a2a 40%, #252525 100%)',
+                    boxShadow: '0 2px 0 #151515, 0 3px 2px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
+                  }}
+                />
+                {['⌘', '⌥', '◀', '▲▼', '▶'].map((key, i) => (
+                  <div 
+                    key={`mod2-${i}`}
+                    className="h-[20px] rounded-[3px] flex items-center justify-center"
+                    style={{
+                      flex: i === 0 || i === 1 ? 1.3 : 1,
+                      background: 'linear-gradient(180deg, #3a3a3a 0%, #2a2a2a 40%, #252525 100%)',
+                      boxShadow: '0 2px 0 #151515, 0 3px 2px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
+                    }}
+                  >
+                    <span className="text-[6px] text-gray-400 font-medium">{key}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* 触控板 */}
+          <div 
+            className="absolute left-1/2 -translate-x-1/2 rounded-lg"
+            style={{
+              bottom: '18px',
+              width: '240px',
+              height: '95px',
+              background: isDarkFrame 
+                ? 'linear-gradient(180deg, #1a1a1a 0%, #141414 100%)'
+                : 'linear-gradient(180deg, #d0d0d0 0%, #c0c0c0 100%)',
+              boxShadow: `
+                inset 0 0 0 0.5px rgba(${isDarkFrame ? '255,255,255,0.08' : '0,0,0,0.15'}),
+                0 0.5px 0 rgba(255,255,255,${isDarkFrame ? 0.03 : 0.3})
+              `,
+              borderRadius: '8px',
+            }}
+          />
+
+          {/* 扬声器格栅 */}
+          <div className="absolute top-2 left-8 right-8 flex justify-between">
+            <div 
+              className="w-28 h-1.5 rounded-full"
+              style={{
+                background: isDarkFrame ? '#0a0a0a' : '#888',
+                boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.4)',
+              }}
+            />
+            <div 
+              className="w-28 h-1.5 rounded-full"
+              style={{
+                background: isDarkFrame ? '#0a0a0a' : '#888',
+                boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.4)',
+              }}
+            />
+          </div>
+        </div>
+
+        {/* 2. 底座前侧面 (厚度) */}
+        <div 
+          className="absolute left-0 right-0 bottom-0"
+          style={{
+            height: `${baseHeight}px`,
+            background: `linear-gradient(180deg, ${frameHex} 0%, ${darkerFrame} 100%)`,
+            transform: 'rotateX(-90deg)',
+            transformOrigin: 'bottom',
+            borderRadius: '0 0 12px 12px',
           }}
         />
 
-        {/* 黑色屏幕边框（内部） */}
+        {/* 3. 底座左侧面 */}
         <div 
-          className="absolute bg-black"
+          className="absolute top-0 bottom-0 left-0"
           style={{
-            top: `${bezelSize - 2}px`,
-            left: `${bezelSize - 2}px`,
-            right: `${bezelSize - 2}px`,
-            bottom: `${bottomBezel - 2}px`,
-            borderRadius: '6px',
-            boxShadow: 'inset 0 0 0 2px #1a1a1a',
+            width: `${baseHeight}px`,
+            background: darkerFrame,
+            transform: 'rotateY(-90deg)',
+            transformOrigin: 'left',
+          }}
+        />
+
+        {/* 4. 底座右侧面 */}
+        <div 
+          className="absolute top-0 bottom-0 right-0"
+          style={{
+            width: `${baseHeight}px`,
+            background: darkerFrame,
+            transform: 'rotateY(90deg)',
+            transformOrigin: 'right',
+          }}
+        />
+      </div>
+
+      {/* ==================== 屏幕部分 (Screen) ==================== */}
+      <div 
+        className="absolute"
+        style={{
+          width: `${screenWidth}px`,
+          height: `${screenHeight}px`,
+          top: '-10px',
+          left: '0',
+          transformStyle: 'preserve-3d',
+          transformOrigin: 'bottom center',
+          transform: `translate3d(0, -${screenHeight - 10}px, 0) rotateX(${-180 + openAngle}deg)`,
+        }}
+      >
+        {/* 1. 屏幕背面 (A面 - LOGO面) */}
+        <div 
+          className="absolute inset-0"
+          style={{
+            background: frameHex,
+            borderRadius: '12px 12px 0 0',
+            transform: `translateZ(-${screenThickness}px) rotateY(180deg)`,
+            boxShadow: 'inset 0 0 20px rgba(0,0,0,0.1)',
+            backfaceVisibility: 'hidden',
           }}
         >
-          {/* 实际屏幕内容 */}
-          <div 
-            className="absolute overflow-hidden"
-            style={{
-              top: '2px',
-              left: '2px',
-              right: '2px',
-              bottom: '2px',
-              borderRadius: '4px',
-              backgroundColor: '#000',
-            }}
-          >
+          {/* Apple Logo 模拟 */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 opacity-20 bg-black rounded-full blur-[1px]" />
+        </div>
+
+        {/* 2. 屏幕正面 (B面 - 显示屏) */}
+        <div 
+          className="absolute inset-0"
+          style={{
+            background: '#000',
+            borderRadius: '12px 12px 0 0',
+            transform: 'translateZ(0px)',
+            border: `1px solid ${isDarkFrame ? '#333' : '#111'}`,
+          }}
+        >
+          {/* 屏幕内屏 (显示区域) */}
+          <div className="absolute left-[8px] right-[8px] top-[8px] bottom-[24px] bg-black overflow-hidden rounded-[4px]">
             {image ? (
               <img 
                 src={image} 
@@ -118,141 +354,107 @@ function MacBookFrame({ config, frameHex, isDarkFrame, image, fitMode, scale, po
                 }} 
               />
             ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f0f23]">
-                <Monitor size={40} className="mb-3 text-gray-600" />
-                <span className="text-xs font-medium text-gray-500">拖拽或点击上传</span>
+              <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#2c1a3e] to-[#0f0f13]">
+                <Monitor size={48} className="mb-2 text-white/20" />
               </div>
             )}
-            
-            {/* 屏幕玻璃反光 */}
+
+            {/* 屏幕反光/光泽层 */}
             <div 
-              className="absolute inset-0 pointer-events-none"
+              className="absolute inset-0 pointer-events-none z-20"
               style={{
-                background: `linear-gradient(${130 + rotateY}deg, 
-                  transparent 0%, 
-                  transparent 40%,
-                  rgba(255,255,255,0.03) 45%,
-                  rgba(255,255,255,0.06) 50%,
-                  rgba(255,255,255,0.03) 55%,
-                  transparent 60%,
-                  transparent 100%
-                )`,
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 40%, transparent 60%, rgba(255,255,255,0.05) 100%)',
               }}
             />
           </div>
 
-          {/* Notch 刘海 */}
+          {/* 屏幕下方的 "MacBook" 字样区域 */}
+          <div className="absolute bottom-0 left-0 right-0 h-[24px] flex items-center justify-center">
+            <span className="text-[8px] font-medium tracking-widest text-[#555]">MacBook Pro</span>
+          </div>
+
+          {/* 摄像头/刘海 */}
           {config.islandType === 'notch' && (
-            <div 
-              className="absolute top-0 left-1/2 -translate-x-1/2"
-              style={{
-                width: `${config.notchWidth}px`,
-                height: '18px',
-                background: '#000',
-                borderRadius: '0 0 8px 8px',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.3)',
-              }}
-            >
-              {/* 摄像头 */}
-              <div className="absolute top-[5px] left-1/2 -translate-x-1/2 w-[5px] h-[5px] rounded-full bg-[#1a1a1a] border border-[#2a2a2a]">
-                <div className="absolute inset-[1px] rounded-full bg-gradient-to-br from-[#2a3a4a] to-[#1a1a25]" />
-                <div className="absolute top-[1px] right-[1px] w-[1px] h-[1px] bg-[#3a5a7a] rounded-full" />
-              </div>
-              {/* 指示灯 */}
-              <div className="absolute top-[7px] left-1/2 translate-x-[15px] w-[3px] h-[3px] rounded-full bg-[#0a0a0a]" />
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[120px] h-[18px] bg-black rounded-b-md z-30">
+              <div className="absolute top-1/2 right-4 -translate-y-1/2 w-1.5 h-1.5 bg-[#1a1a2e] rounded-full ring-1 ring-[#333]" />
             </div>
           )}
         </div>
 
-        {/* 底部 Logo 区域 */}
+        {/* 3. 屏幕侧面 (厚度封闭) */}
+        {/* 上侧面 */}
         <div 
-          className="absolute bottom-0 left-0 right-0 flex items-center justify-center"
-          style={{ height: `${bottomBezel}px` }}
-        >
-          {/* Apple Logo 或品牌标识 */}
+          className="absolute top-0 left-0 right-0"
+          style={{
+            height: `${screenThickness}px`,
+            background: darkerFrame,
+            transform: 'rotateX(90deg) translateZ(-3px)',
+            transformOrigin: 'center',
+          }}
+        />
+
+        {/* 左侧面 */}
+        <div 
+          className="absolute top-0 bottom-0 left-0"
+          style={{
+            width: `${screenThickness}px`,
+            background: darkerFrame,
+            transform: 'rotateY(-90deg) translateZ(3px)',
+            transformOrigin: 'left',
+          }}
+        />
+
+        {/* 右侧面 */}
+        <div 
+          className="absolute top-0 bottom-0 right-0"
+          style={{
+            width: `${screenThickness}px`,
+            background: darkerFrame,
+            transform: 'rotateY(90deg) translateZ(3px)',
+            transformOrigin: 'right',
+          }}
+        />
+
+        {/* 屏幕在底座上的投影 */}
+        {hasShadow && (
           <div 
-            className="text-[10px] font-medium tracking-wider"
-            style={{ color: isDarkFrame ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.2)' }}
-          >
-            MacBook
-          </div>
-        </div>
-
-        {/* 屏幕盖厚度（3D效果） */}
-        <div 
-          className="absolute left-0 right-0 -bottom-[1px]"
-          style={{
-            height: `${lidThickness}px`,
-            background: `linear-gradient(180deg, ${frameHex} 0%, ${darkerFrame} 100%)`,
-            borderRadius: '0 0 2px 2px',
-            transform: 'translateZ(-2px)',
-          }}
-        />
+            className="absolute bottom-[-10px] left-0 right-0 h-[40px] pointer-events-none"
+            style={{
+              background: 'linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 100%)',
+              transform: `rotateX(${180 - openAngle}deg) translateZ(2px)`,
+              transformOrigin: 'top',
+              filter: 'blur(8px)',
+              opacity: 0.8,
+            }}
+          />
+        )}
       </div>
 
-      {/* ===== 转轴部分 ===== */}
+      {/* 物理转轴 (Hinge Cylinder) */}
       <div 
-        className="relative mx-auto"
+        className="absolute left-0 right-0"
         style={{
-          width: `${screenWidth * 0.95}px`,
-          height: `${hingeHeight}px`,
-          background: `linear-gradient(180deg, ${darkerFrame} 0%, ${isDarkFrame ? '#1a1a1a' : '#a0a0a0'} 50%, ${darkerFrame} 100%)`,
-          borderRadius: '0 0 2px 2px',
-          boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.3)',
+          bottom: '0px',
+          height: '16px',
+          background: '#111',
+          transform: 'translateZ(-2px) rotateX(90deg)',
+          borderRadius: '8px',
+          zIndex: -1,
         }}
-      >
-        {/* 转轴高光 */}
-        <div 
-          className="absolute inset-x-0 top-0 h-[1px]"
-          style={{ background: `rgba(255,255,255,${isDarkFrame ? 0.05 : 0.2})` }}
-        />
-      </div>
+      />
 
-      {/* ===== 底座（键盘部分）===== */}
-      <div 
-        className="relative mx-auto"
-        style={{
-          width: `${screenWidth + bezelSize * 2 + 20}px`,
-          height: `${baseHeight}px`,
-          background: `linear-gradient(180deg, ${frameHex} 0%, ${darkerFrame} 100%)`,
-          borderRadius: '0 0 8px 8px / 0 0 4px 4px',
-          boxShadow: hasShadow 
-            ? `0 ${4 + rotateX * 0.3}px ${12 + Math.abs(rotateY) * 0.3}px -2px rgba(0,0,0,0.3)`
-            : 'none',
-        }}
-      >
-        {/* 底座前缘凹槽（开盖用） */}
-        <div 
-          className="absolute top-[2px] left-1/2 -translate-x-1/2 w-16 h-[3px] rounded-full"
-          style={{ 
-            background: isDarkFrame ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.15)',
-            boxShadow: `inset 0 1px 1px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,${isDarkFrame ? 0.05 : 0.2})`,
-          }}
-        />
-        
-        {/* 底座金属质感 */}
-        <div 
-          className="absolute inset-0 rounded-[inherit] pointer-events-none"
-          style={{
-            background: `linear-gradient(90deg, rgba(0,0,0,0.1) 0%, transparent 10%, transparent 90%, rgba(0,0,0,0.1) 100%)`,
-          }}
-        />
-
-        {/* 橡胶脚垫指示 */}
-        <div className="absolute bottom-[1px] left-[15%] w-[8px] h-[2px] rounded-full bg-black/20" />
-        <div className="absolute bottom-[1px] right-[15%] w-[8px] h-[2px] rounded-full bg-black/20" />
-      </div>
-
-      {/* 底部投影 */}
+      {/* 底部悬浮阴影 */}
       {hasShadow && (
         <div 
           className="absolute left-1/2 -translate-x-1/2"
           style={{
-            bottom: '-8px',
-            width: '85%',
-            height: '12px',
-            background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.25) 0%, transparent 70%)',
-            filter: 'blur(4px)',
+            bottom: '-60px',
+            width: '90%',
+            height: '100px',
+            background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.4) 0%, transparent 70%)',
+            transform: 'rotateX(90deg) translateZ(-50px)',
+            filter: 'blur(20px)',
+            zIndex: -10,
           }}
         />
       )}

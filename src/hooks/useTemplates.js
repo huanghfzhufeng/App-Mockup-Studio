@@ -191,6 +191,130 @@ const DEFAULT_TEMPLATES = [
       isLandscape: true,
     }
   },
+  
+  // MacBook 系列
+  {
+    id: 'macbook-pro',
+    name: 'MacBook Pro',
+    config: {
+      model: 'macbook-pro-16',
+      deviceColor: 'space',
+      backgroundId: 'soft-gray',
+      layout: 'single',
+      rotateX: 8,
+      rotateY: 12,
+      perspective: 1200,
+      hasShadow: true,
+      isLandscape: false,
+    }
+  },
+  {
+    id: 'macbook-air',
+    name: 'MacBook Air',
+    config: {
+      model: 'macbook-air-15',
+      deviceColor: 'silver',
+      backgroundId: 'white',
+      layout: 'single',
+      rotateX: 5,
+      rotateY: -10,
+      perspective: 1100,
+      hasShadow: true,
+      isLandscape: false,
+    }
+  },
+  {
+    id: 'macbook-dark',
+    name: 'MacBook 暗黑',
+    config: {
+      model: 'macbook-pro-14',
+      deviceColor: 'space',
+      backgroundId: 'black',
+      layout: 'single',
+      rotateX: 10,
+      rotateY: 15,
+      perspective: 1000,
+      hasShadow: true,
+      isLandscape: false,
+    }
+  },
+  
+  // 浏览器系列
+  {
+    id: 'browser-chrome',
+    name: 'Chrome 浏览器',
+    config: {
+      model: 'browser-chrome',
+      deviceColor: 'light',
+      backgroundId: 'soft-blue',
+      layout: 'single',
+      rotateX: 5,
+      rotateY: 10,
+      perspective: 1000,
+      hasShadow: true,
+      isLandscape: false,
+    }
+  },
+  {
+    id: 'browser-safari',
+    name: 'Safari 浏览器',
+    config: {
+      model: 'browser-safari',
+      deviceColor: 'light',
+      backgroundId: 'white',
+      layout: 'single',
+      rotateX: 0,
+      rotateY: 0,
+      perspective: 1000,
+      hasShadow: true,
+      isLandscape: false,
+    }
+  },
+  {
+    id: 'browser-arc',
+    name: 'Arc 浏览器',
+    config: {
+      model: 'browser-arc',
+      deviceColor: 'purple',
+      backgroundId: 'soft-purple',
+      layout: 'single',
+      rotateX: 5,
+      rotateY: -8,
+      perspective: 1100,
+      hasShadow: true,
+      isLandscape: false,
+    }
+  },
+  {
+    id: 'web-minimal',
+    name: 'Web 极简',
+    config: {
+      model: 'browser-minimal',
+      deviceColor: 'light',
+      backgroundId: 'warm-white',
+      layout: 'single',
+      rotateX: 0,
+      rotateY: 0,
+      perspective: 1000,
+      hasShadow: false,
+      isLandscape: false,
+    }
+  },
+  {
+    id: 'web-dark',
+    name: 'Web 暗黑',
+    config: {
+      model: 'browser-chrome',
+      deviceColor: 'dark',
+      backgroundId: 'black',
+      layout: 'single',
+      rotateX: 5,
+      rotateY: -12,
+      perspective: 1000,
+      hasShadow: true,
+      isLandscape: false,
+    }
+  },
 ];
 
 export function useTemplates() {
