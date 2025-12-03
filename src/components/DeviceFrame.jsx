@@ -1,6 +1,7 @@
 import { memo, useMemo } from 'react';
 import { Smartphone, Tablet, Monitor, Globe } from 'lucide-react';
 import { DEVICE_MODELS } from '../config/constants';
+import { useAppStore } from '../store/useAppStore';
 
 // 判断颜色是否为深色
 function isFrameDark(hex) {
@@ -647,7 +648,10 @@ const BUTTON_CONFIG = {
 
 // 主组件
 const DeviceFrame = memo(function DeviceFrame({ model, color, image, fitMode = 'cover', position = { x: 0, y: 0 }, scale = 1, hasShadow = true, rotateX = 0, rotateY = 0, isLandscape = false, enableAnimation = false }) {
-  const config = DEVICE_MODELS[model];
+  // 获取自定义机型
+  const customDevices = useAppStore((state) => state.customDevices);
+  const allDevices = useMemo(() => ({ ...DEVICE_MODELS, ...customDevices }), [customDevices]);
+  const config = allDevices[model];
   
   const computed = useMemo(() => {
     if (!config) return null;

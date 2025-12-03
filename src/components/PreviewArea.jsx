@@ -1,4 +1,4 @@
-import { forwardRef, useCallback } from 'react';
+import { forwardRef, useCallback, useState } from 'react';
 import { Move, Lock, ZoomIn } from 'lucide-react';
 import PreviewCanvas from './PreviewCanvas';
 import { useDrag, useFileDrop, usePreviewZoom } from '../hooks/useDrag';
@@ -18,6 +18,16 @@ const PreviewArea = forwardRef(({ onImageDrop }, ref) => {
     
     // 布局
     layout,
+    
+    // 画布尺寸
+    canvasSize,
+    
+    // 画布设备
+    canvasDevices,
+    selectedDeviceId,
+    selectCanvasDevice,
+    updateCanvasDevice,
+    bringDeviceToFront,
     
     // 设备配置
     model,
@@ -133,6 +143,48 @@ const PreviewArea = forwardRef(({ onImageDrop }, ref) => {
     onDeviceDragStart(e, deviceIndex, currentPos);
   }, [devicePosition1, devicePosition2, setActiveDevice, onDeviceDragStart]);
 
+  // 画布设备拖拽状态
+  const [canvasDeviceDrag, setCanvasDeviceDrag] = useState(null);
+
+  // 画布设备点击处理
+  const handleCanvasDeviceMouseDown = useCallback((e, deviceId) => {
+    e.stopPropagation();
+    selectCanvasDevice(deviceId);
+    bringDeviceToFront(deviceId);
+    
+    if (!moveMode) return;
+    
+    const device = canvasDevices.find(d => d.id === deviceId);
+    if (!device) return;
+    
+    setCanvasDeviceDrag({
+      deviceId,
+      startX: e.clientX,
+      startY: e.clientY,
+      startPos: device.position || { x: 0, y: 0 },
+    });
+  }, [canvasDevices, selectCanvasDevice, bringDeviceToFront, moveMode]);
+
+  // 画布设备拖拽移动
+  const handleCanvasDeviceMouseMove = useCallback((e) => {
+    if (!canvasDeviceDrag) return;
+    
+    const dx = (e.clientX - canvasDeviceDrag.startX) / previewZoom;
+    const dy = (e.clientY - canvasDeviceDrag.startY) / previewZoom;
+    
+    updateCanvasDevice(canvasDeviceDrag.deviceId, {
+      position: {
+        x: canvasDeviceDrag.startPos.x + dx,
+        y: canvasDeviceDrag.startPos.y + dy,
+      }
+    });
+  }, [canvasDeviceDrag, previewZoom, updateCanvasDevice]);
+
+  // 画布设备拖拽结束
+  const handleCanvasDeviceMouseUp = useCallback(() => {
+    setCanvasDeviceDrag(null);
+  }, []);
+
   // 画布点击处理
   const handleCanvasMouseDown = useCallback((e) => {
     if (isEditingText || !moveMode) return;
@@ -151,12 +203,24 @@ const PreviewArea = forwardRef(({ onImageDrop }, ref) => {
     }
   }, [handleZoomWheel, moveMode, handleDeviceWheel, activeDevice]);
 
+  // 合并鼠标移动处理
+  const handleCombinedMouseMove = useCallback((e) => {
+    handleMouseMove(e);
+    handleCanvasDeviceMouseMove(e);
+  }, [handleMouseMove, handleCanvasDeviceMouseMove]);
+
+  // 合并鼠标释放处理
+  const handleCombinedMouseUp = useCallback(() => {
+    handleMouseUp();
+    handleCanvasDeviceMouseUp();
+  }, [handleMouseUp, handleCanvasDeviceMouseUp]);
+
   return (
     <div 
       className="flex-1 relative overflow-hidden flex items-center justify-center p-6 md:p-12 bg-secondary/30"
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
+      onMouseMove={handleCombinedMouseMove}
+      onMouseUp={handleCombinedMouseUp}
+      onMouseLeave={handleCombinedMouseUp}
       onWheel={handleWheel}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -185,6 +249,11 @@ const PreviewArea = forwardRef(({ onImageDrop }, ref) => {
         // 布局
         layout={layout}
         exportRatio={exportRatio}
+        // 画布尺寸
+        canvasSize={canvasSize}
+        // 画布设备
+        canvasDevices={canvasDevices}
+        selectedDeviceId={selectedDeviceId}
         // 设备配置
         model={model}
         deviceColor={deviceColor}
@@ -215,13 +284,14 @@ const PreviewArea = forwardRef(({ onImageDrop }, ref) => {
         // 交互状态
         moveMode={moveMode}
         activeDevice={activeDevice}
-        isDragging={isDragging}
+        isDragging={isDragging || !!canvasDeviceDrag}
         // 缩放
         previewZoom={previewZoom}
         // 事件处理
         onDeviceMouseDown={handleDeviceMouseDown}
         onDeviceWheel={handleDeviceWheel}
         onCanvasMouseDown={handleCanvasMouseDown}
+        onCanvasDeviceMouseDown={handleCanvasDeviceMouseDown}
       />
 
       {/* 状态提示 */}

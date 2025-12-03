@@ -2,9 +2,32 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { BACKGROUNDS, DEFAULT_TEXT_ANNOTATION, EXPORT_RATIOS, DEFAULT_CONFIG, DEVICE_MODELS } from '../config/constants';
 
+// 默认画布尺寸
+const DEFAULT_CANVAS_SIZE = {
+  width: 600,
+  height: 900,
+  autoFit: true, // 自动适应内容
+};
+
+// 创建新设备的默认配置
+const createDefaultDevice = (model = 'iphone-16', position = { x: 0, y: 0 }) => ({
+  id: `device-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+  model,
+  color: Object.keys(DEVICE_MODELS[model]?.frameColor || { black: '#000' })[0],
+  position,
+  scale: 1,
+  rotation: { x: 0, y: 0 },
+  isLandscape: false,
+  screenshot: null,
+  imagePosition: { x: 0, y: 0 },
+  imageScale: 1,
+  fitMode: 'cover',
+  zIndex: 1,
+});
+
 // 设备配置 slice
-const createDeviceSlice = (set) => ({
-  // 设备基础配置
+const createDeviceSlice = (set, get) => ({
+  // 设备基础配置（兼容旧版单设备模式）
   model: DEFAULT_CONFIG.model,
   deviceColor: DEFAULT_CONFIG.deviceColor,
   isLandscape: DEFAULT_CONFIG.isLandscape,
@@ -27,6 +50,10 @@ const createDeviceSlice = (set) => ({
   // 交互状态
   moveMode: false,
   activeDevice: 1,
+  
+  // 画布设备列表（自由模式）
+  canvasDevices: [],
+  selectedDeviceId: null,
 
   // Actions
   setModel: (model) => set({ model, deviceColor: Object.keys(DEVICE_MODELS[model].frameColor)[0] }),
@@ -45,6 +72,58 @@ const createDeviceSlice = (set) => ({
   setPosition2: (position2) => set({ position2 }),
   setMoveMode: (moveMode) => set({ moveMode }),
   setActiveDevice: (activeDevice) => set({ activeDevice }),
+  
+  // 画布设备管理
+  addDeviceToCanvas: (model = 'iphone-16', position) => {
+    const state = get();
+    const newDevice = createDefaultDevice(model, position || { x: Math.random() * 100 - 50, y: Math.random() * 100 - 50 });
+    newDevice.zIndex = state.canvasDevices.length + 1;
+    set({ 
+      canvasDevices: [...state.canvasDevices, newDevice],
+      selectedDeviceId: newDevice.id,
+    });
+    return newDevice.id;
+  },
+  
+  removeDeviceFromCanvas: (deviceId) => set((state) => ({
+    canvasDevices: state.canvasDevices.filter(d => d.id !== deviceId),
+    selectedDeviceId: state.selectedDeviceId === deviceId ? null : state.selectedDeviceId,
+  })),
+  
+  updateCanvasDevice: (deviceId, updates) => set((state) => ({
+    canvasDevices: state.canvasDevices.map(d => 
+      d.id === deviceId ? { ...d, ...updates } : d
+    ),
+  })),
+  
+  selectCanvasDevice: (deviceId) => set({ selectedDeviceId: deviceId }),
+  
+  bringDeviceToFront: (deviceId) => set((state) => {
+    const maxZ = Math.max(...state.canvasDevices.map(d => d.zIndex), 0);
+    return {
+      canvasDevices: state.canvasDevices.map(d =>
+        d.id === deviceId ? { ...d, zIndex: maxZ + 1 } : d
+      ),
+    };
+  }),
+  
+  duplicateCanvasDevice: (deviceId) => {
+    const state = get();
+    const device = state.canvasDevices.find(d => d.id === deviceId);
+    if (!device) return;
+    const newDevice = {
+      ...device,
+      id: `device-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      position: { x: device.position.x + 30, y: device.position.y + 30 },
+      zIndex: state.canvasDevices.length + 1,
+    };
+    set({
+      canvasDevices: [...state.canvasDevices, newDevice],
+      selectedDeviceId: newDevice.id,
+    });
+  },
+  
+  clearAllCanvasDevices: () => set({ canvasDevices: [], selectedDeviceId: null }),
 });
 
 // 3D 效果 slice
@@ -70,11 +149,44 @@ const createLayoutSlice = (set) => ({
   background: BACKGROUNDS[0],
   customBgColor: '#ffffff',
   customBgImage: null,
+  
+  // 画布尺寸
+  canvasSize: DEFAULT_CANVAS_SIZE,
 
   setLayout: (layout) => set({ layout }),
   setBackground: (background) => set({ background }),
   setCustomBgColor: (customBgColor) => set({ customBgColor }),
   setCustomBgImage: (customBgImage) => set({ customBgImage }),
+  setCanvasSize: (canvasSize) => set({ canvasSize }),
+  updateCanvasSize: (field, value) => set((state) => ({
+    canvasSize: { ...state.canvasSize, [field]: value }
+  })),
+});
+
+// 自定义机型 slice
+const createCustomDeviceSlice = (set, get) => ({
+  customDevices: {},
+  
+  // 添加自定义机型
+  addCustomDevice: (id, config) => set((state) => ({
+    customDevices: { ...state.customDevices, [id]: { ...config, isCustom: true } }
+  })),
+  
+  // 删除自定义机型
+  removeCustomDevice: (id) => set((state) => {
+    const { [id]: removed, ...rest } = state.customDevices;
+    // 如果当前选中的是被删除的机型，切换到默认机型
+    if (state.model === id) {
+      return { customDevices: rest, model: DEFAULT_CONFIG.model };
+    }
+    return { customDevices: rest };
+  }),
+  
+  // 获取所有机型（内置 + 自定义）
+  getAllDevices: () => {
+    const state = get();
+    return { ...DEVICE_MODELS, ...state.customDevices };
+  },
 });
 
 
@@ -139,6 +251,9 @@ const createUISlice = (set, get) => ({
     background: BACKGROUNDS[0],
     annotation: DEFAULT_TEXT_ANNOTATION,
     customBgImage: null,
+    canvasSize: DEFAULT_CANVAS_SIZE,
+    canvasDevices: [],
+    selectedDeviceId: null,
   }),
 });
 
@@ -202,13 +317,14 @@ const createHistorySlice = (set, get) => ({
 export const useAppStore = create(
   persist(
     (set, get) => ({
-      ...createDeviceSlice(set),
+      ...createDeviceSlice(set, get),
       ...create3DSlice(set),
       ...createLayoutSlice(set),
       ...createAnnotationSlice(set),
       ...createExportSlice(set),
       ...createUISlice(set, get),
       ...createHistorySlice(set, get),
+      ...createCustomDeviceSlice(set, get),
     }),
     {
       name: 'mockup-storage',
@@ -228,6 +344,8 @@ export const useAppStore = create(
         deviceScale2: state.deviceScale2,
         watermark: state.watermark,
         annotation: state.annotation,
+        canvasSize: state.canvasSize,
+        customDevices: state.customDevices,
       }),
     }
   )

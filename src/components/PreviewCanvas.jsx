@@ -18,6 +18,13 @@ const PreviewCanvas = memo(forwardRef(({
   layout,
   exportRatio,
   
+  // 画布尺寸
+  canvasSize,
+  
+  // 画布设备列表
+  canvasDevices = [],
+  selectedDeviceId,
+  
   // 设备配置
   model,
   deviceColor,
@@ -62,6 +69,7 @@ const PreviewCanvas = memo(forwardRef(({
   onDeviceMouseDown,
   onDeviceWheel,
   onCanvasMouseDown,
+  onCanvasDeviceMouseDown,
 }, ref) => {
   
   // 使用 useMemo 缓存背景样式
@@ -83,6 +91,16 @@ const PreviewCanvas = memo(forwardRef(({
 
   // 使用 useMemo 缓存画布尺寸
   const canvasStyle = useMemo(() => {
+    // 如果有自定义画布尺寸且不是自动适应
+    if (canvasSize && !canvasSize.autoFit) {
+      return {
+        width: `${canvasSize.width}px`,
+        height: `${canvasSize.height}px`,
+        minWidth: 'unset',
+        minHeight: 'unset',
+      };
+    }
+    
     const baseWidth = layout === 'double' || layout === 'mixed' ? 900 : 600;
     
     if (exportRatio && exportRatio.ratio) {
@@ -97,7 +115,7 @@ const PreviewCanvas = memo(forwardRef(({
       minWidth: `${baseWidth}px`,
       minHeight: '900px',
     };
-  }, [layout, exportRatio]);
+  }, [layout, exportRatio, canvasSize]);
 
   const secondImage = screenshot2 || screenshot;
 
@@ -134,62 +152,100 @@ const PreviewCanvas = memo(forwardRef(({
         isEditing={isEditingText}
       />
 
-      <div 
-        className={`relative z-10 flex ${layout === 'double' || layout === 'mixed' ? 'gap-16' : ''} items-center justify-center`}
-        style={{ transformStyle: 'preserve-3d' }}
-      >
-        {/* 设备 1 */}
-        <div 
-          className={`transition-all duration-200 ${moveMode ? 'cursor-move' : ''} ${moveMode && activeDevice === 1 ? 'ring-2 ring-foreground/50 ring-offset-4 ring-offset-transparent rounded-[44px]' : ''}`}
-          style={{ 
-            transformStyle: 'preserve-3d',
-            transform: `translateZ(${layout !== 'single' ? 20 : 0}px) translate(${devicePosition1?.x || 0}px, ${devicePosition1?.y || 0}px) scale(${deviceScale1 || 1})`
-          }}
-          onMouseDown={(e) => onDeviceMouseDown?.(e, 1)}
-          onWheel={(e) => onDeviceWheel?.(e, 1)}
-        >
-          <DeviceFrame 
-            model={model} 
-            color={deviceColor} 
-            image={screenshot} 
-            fitMode={fitMode}
-            scale={scale}
-            position={position}
-            hasShadow={hasShadow}
-            rotateX={rotateX}
-            rotateY={layout !== 'single' ? rotateY + 15 : rotateY}
-            isLandscape={isLandscape}
-            enableAnimation={enableAnimation}
-          />
+      {/* 画布设备列表（自由模式） */}
+      {canvasDevices.length > 0 ? (
+        <div className="relative z-10" style={{ transformStyle: 'preserve-3d' }}>
+          {canvasDevices
+            .sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0))
+            .map((device) => (
+              <div
+                key={device.id}
+                className={`absolute transition-all duration-200 ${moveMode ? 'cursor-move' : 'cursor-pointer'} ${selectedDeviceId === device.id ? 'ring-2 ring-blue-500 ring-offset-4 ring-offset-transparent rounded-[44px]' : ''}`}
+                style={{
+                  transformStyle: 'preserve-3d',
+                  transform: `translate(${device.position?.x || 0}px, ${device.position?.y || 0}px) scale(${device.scale || 1})`,
+                  zIndex: device.zIndex || 1,
+                  left: '50%',
+                  top: '50%',
+                  marginLeft: '-160px',
+                  marginTop: '-300px',
+                }}
+                onMouseDown={(e) => onCanvasDeviceMouseDown?.(e, device.id)}
+              >
+                <DeviceFrame
+                  model={device.model}
+                  color={device.color}
+                  image={device.screenshot}
+                  fitMode={device.fitMode || 'cover'}
+                  scale={device.imageScale || 1}
+                  position={device.imagePosition || { x: 0, y: 0 }}
+                  hasShadow={hasShadow}
+                  rotateX={device.rotation?.x || rotateX}
+                  rotateY={device.rotation?.y || rotateY}
+                  isLandscape={device.isLandscape}
+                  enableAnimation={enableAnimation}
+                />
+              </div>
+            ))}
         </div>
-        
-        {/* 设备 2 */}
-        {(layout === 'double' || layout === 'mixed') && (
+      ) : (
+        <div 
+          className={`relative z-10 flex ${layout === 'double' || layout === 'mixed' ? 'gap-16' : ''} items-center justify-center`}
+          style={{ transformStyle: 'preserve-3d' }}
+        >
+          {/* 设备 1 */}
           <div 
-            className={`transition-all duration-200 ${moveMode ? 'cursor-move' : ''} ${moveMode && activeDevice === 2 ? 'ring-2 ring-foreground/50 ring-offset-4 ring-offset-transparent rounded-[44px]' : ''}`}
+            className={`transition-all duration-200 ${moveMode ? 'cursor-move' : ''} ${moveMode && activeDevice === 1 ? 'ring-2 ring-foreground/50 ring-offset-4 ring-offset-transparent rounded-[44px]' : ''}`}
             style={{ 
               transformStyle: 'preserve-3d',
-              transform: `translateZ(-20px) translate(${devicePosition2?.x || 0}px, ${devicePosition2?.y || 0}px) scale(${deviceScale2 || 1})`
+              transform: `translateZ(${layout !== 'single' ? 20 : 0}px) translate(${devicePosition1?.x || 0}px, ${devicePosition1?.y || 0}px) scale(${deviceScale1 || 1})`
             }}
-            onMouseDown={(e) => onDeviceMouseDown?.(e, 2)}
-            onWheel={(e) => onDeviceWheel?.(e, 2)}
+            onMouseDown={(e) => onDeviceMouseDown?.(e, 1)}
+            onWheel={(e) => onDeviceWheel?.(e, 1)}
           >
             <DeviceFrame 
-              model={layout === 'mixed' ? 'ipad-pro-13' : model} 
+              model={model} 
               color={deviceColor} 
-              image={secondImage} 
+              image={screenshot} 
               fitMode={fitMode}
               scale={scale}
-              position={position2}
+              position={position}
               hasShadow={hasShadow}
               rotateX={rotateX}
-              rotateY={rotateY - 15}
-              isLandscape={layout === 'mixed' ? false : isLandscape}
+              rotateY={layout !== 'single' ? rotateY + 15 : rotateY}
+              isLandscape={isLandscape}
               enableAnimation={enableAnimation}
             />
           </div>
-        )}
-      </div>
+          
+          {/* 设备 2 */}
+          {(layout === 'double' || layout === 'mixed') && (
+            <div 
+              className={`transition-all duration-200 ${moveMode ? 'cursor-move' : ''} ${moveMode && activeDevice === 2 ? 'ring-2 ring-foreground/50 ring-offset-4 ring-offset-transparent rounded-[44px]' : ''}`}
+              style={{ 
+                transformStyle: 'preserve-3d',
+                transform: `translateZ(-20px) translate(${devicePosition2?.x || 0}px, ${devicePosition2?.y || 0}px) scale(${deviceScale2 || 1})`
+              }}
+              onMouseDown={(e) => onDeviceMouseDown?.(e, 2)}
+              onWheel={(e) => onDeviceWheel?.(e, 2)}
+            >
+              <DeviceFrame 
+                model={layout === 'mixed' ? 'ipad-pro-13' : model} 
+                color={deviceColor} 
+                image={secondImage} 
+                fitMode={fitMode}
+                scale={scale}
+                position={position2}
+                hasShadow={hasShadow}
+                rotateX={rotateX}
+                rotateY={rotateY - 15}
+                isLandscape={layout === 'mixed' ? false : isLandscape}
+                enableAnimation={enableAnimation}
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 水印 */}
       {watermark.visible && (
@@ -224,6 +280,13 @@ PreviewCanvas.propTypes = {
   exportRatio: PropTypes.shape({
     id: PropTypes.string,
     ratio: PropTypes.number,
+  }),
+  
+  // 画布尺寸
+  canvasSize: PropTypes.shape({
+    width: PropTypes.number,
+    height: PropTypes.number,
+    autoFit: PropTypes.bool,
   }),
   
   // 设备配置
