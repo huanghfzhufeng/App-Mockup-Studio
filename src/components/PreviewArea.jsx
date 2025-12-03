@@ -1,198 +1,155 @@
-import { forwardRef, useState, useRef } from 'react';
+import { forwardRef, useCallback } from 'react';
 import { Move, Lock, ZoomIn } from 'lucide-react';
-import DeviceFrame from './DeviceFrame';
-import TextAnnotation from './TextAnnotation';
+import PreviewCanvas from './PreviewCanvas';
+import { useDrag, useFileDrop, usePreviewZoom } from '../hooks/useDrag';
+import { useAppStore } from '../store/useAppStore';
 
-const PreviewArea = forwardRef(({
-  background,
-  customBgColor,
-  customBgImage,
-  layout,
-  model,
-  model2,
-  deviceColor,
-  screenshot,
-  screenshot2,
-  fitMode,
-  scale,
-  position,
-  setPosition,
-  position2,
-  setPosition2,
-  moveMode,
-  setMoveMode,
-  activeDevice,
-  setActiveDevice,
-  devicePosition1,
-  setDevicePosition1,
-  devicePosition2,
-  setDevicePosition2,
-  deviceScale1,
-  setDeviceScale1,
-  deviceScale2,
-  setDeviceScale2,
-  hasShadow,
-  rotateX,
-  rotateY,
-  perspective,
-  annotation,
-  setAnnotation,
-  isEditingText,
-  exportRatio,
-  isLandscape,
-  enableAnimation,
-  watermark,
-  onImageDrop,
-  isDark
-}, ref) => {
-  const [isDragging, setIsDragging] = useState(false);
-  const [isDragOver, setIsDragOver] = useState(false);
-  const [previewZoom, setPreviewZoom] = useState(1);
-  const [dragType, setDragType] = useState('image'); // 'image' 或 'device'
-  const dragStart = useRef({ x: 0, y: 0 });
-  const posStart = useRef({ x: 0, y: 0 });
-  const draggingDevice = useRef(1); // 当前正在拖动的设备
-
-  const getBackgroundStyle = () => {
-    if (customBgImage) {
-      return { backgroundImage: `url(${customBgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' };
-    }
-    if (background.type === 'custom-glass') {
-      return { background: isDark ? 'hsl(0 0% 12%)' : 'hsl(0 0% 96%)' };
-    }
-    if (background.id === 'custom') {
-      return { backgroundColor: customBgColor };
-    }
-    if (background.type === 'image') {
-      return { backgroundImage: background.value, backgroundSize: 'cover', backgroundPosition: 'center' };
-    }
-    return { background: background.value };
-  };
-
-  // 拖动设备框架
-  const handleDeviceMouseDown = (e, deviceIndex) => {
-    if (isEditingText || !moveMode) return;
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-    setDragType('device');
-    draggingDevice.current = deviceIndex;
-    dragStart.current = { x: e.clientX, y: e.clientY };
-    const currentPos = deviceIndex === 1 ? (devicePosition1 || { x: 0, y: 0 }) : (devicePosition2 || { x: 0, y: 0 });
-    posStart.current = { ...currentPos };
-    setActiveDevice(deviceIndex);
-  };
-
-  // 拖动图片（在设备内）- 双击切换
-  const handleMouseDown = (e, deviceIndex) => {
-    if (isEditingText || !moveMode) return;
-    e.preventDefault();
-    e.stopPropagation();
-    const device = deviceIndex || 1;
-    setIsDragging(true);
-    setDragType('image');
-    draggingDevice.current = device;
-    dragStart.current = { x: e.clientX, y: e.clientY };
-    const currentPos = device === 1 ? position : position2;
-    posStart.current = { ...currentPos };
-    setActiveDevice(device);
-  };
-
-  const handleMouseMove = (e) => {
-    if (!isDragging || !moveMode) return;
-    const currentDevice = draggingDevice.current;
-    const dx = (e.clientX - dragStart.current.x) / previewZoom;
-    const dy = (e.clientY - dragStart.current.y) / previewZoom;
-    const newPos = {
-      x: Math.round(posStart.current.x + dx),
-      y: Math.round(posStart.current.y + dy),
-    };
+/**
+ * PreviewArea - 负责交互逻辑，渲染委托给 PreviewCanvas
+ */
+const PreviewArea = forwardRef(({ onImageDrop }, ref) => {
+  // 从 store 获取状态
+  const {
+    // 背景
+    background,
+    customBgColor,
+    customBgImage,
+    isDark,
     
-    if (dragType === 'device') {
-      if (currentDevice === 1) {
-        setDevicePosition1(newPos);
-      } else {
-        setDevicePosition2(newPos);
-      }
-    } else {
-      const effectiveScale = scale * previewZoom;
-      const imgDx = (e.clientX - dragStart.current.x) / effectiveScale;
-      const imgDy = (e.clientY - dragStart.current.y) / effectiveScale;
-      const imgPos = {
-        x: Math.round(posStart.current.x + imgDx),
-        y: Math.round(posStart.current.y + imgDy),
-      };
-      if (currentDevice === 1) {
-        setPosition(imgPos);
-      } else {
-        setPosition2(imgPos);
-      }
-    }
-  };
-  
-  // 设备缩放（滚轮在设备上）
-  const handleDeviceWheel = (e, deviceIndex) => {
-    if (!moveMode) return;
-    e.preventDefault();
-    e.stopPropagation();
-    const delta = e.deltaY > 0 ? -0.05 : 0.05;
+    // 布局
+    layout,
+    
+    // 设备配置
+    model,
+    deviceColor,
+    isLandscape,
+    hasShadow,
+    enableAnimation,
+    
+    // 3D 效果
+    rotateX,
+    rotateY,
+    perspective,
+    
+    // 图片
+    screenshot,
+    screenshot2,
+    fitMode,
+    scale,
+    position,
+    position2,
+    setPosition,
+    setPosition2,
+    
+    // 设备位置缩放
+    devicePosition1,
+    devicePosition2,
+    deviceScale1,
+    deviceScale2,
+    setDevicePosition1,
+    setDevicePosition2,
+    setDeviceScale1,
+    setDeviceScale2,
+    
+    // 文字标注
+    annotation,
+    setAnnotation,
+    isEditingText,
+    watermark,
+    
+    // 交互状态
+    moveMode,
+    setMoveMode,
+    activeDevice,
+    setActiveDevice,
+    
+    // 导出
+    exportRatio,
+  } = useAppStore();
+
+  // 预览缩放
+  const { previewZoom, handleWheel: handleZoomWheel } = usePreviewZoom(1);
+
+  // 设备拖拽回调
+  const handleDeviceDrag = useCallback((deviceIndex, newPos) => {
     if (deviceIndex === 1) {
-      setDeviceScale1(prev => Math.max(0.3, Math.min(2, prev + delta)));
+      setDevicePosition1(newPos);
     } else {
-      setDeviceScale2(prev => Math.max(0.3, Math.min(2, prev + delta)));
+      setDevicePosition2(newPos);
     }
-  };
+  }, [setDevicePosition1, setDevicePosition2]);
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
+  // 图片拖拽回调
+  const handleImageDrag = useCallback((deviceIndex, newPos) => {
+    if (deviceIndex === 1) {
+      setPosition(newPos);
+    } else {
+      setPosition2(newPos);
+    }
+  }, [setPosition, setPosition2]);
 
-  const handleWheel = (e) => {
+  // 设备缩放回调
+  const handleDeviceScale = useCallback((deviceIndex, delta) => {
+    if (deviceIndex === 1) {
+      setDeviceScale1(Math.max(0.3, Math.min(2, deviceScale1 + delta)));
+    } else {
+      setDeviceScale2(Math.max(0.3, Math.min(2, deviceScale2 + delta)));
+    }
+  }, [deviceScale1, deviceScale2, setDeviceScale1, setDeviceScale2]);
+
+  // 拖拽 hook
+  const {
+    isDragging,
+    dragType,
+    currentDevice,
+    handleDeviceMouseDown: onDeviceDragStart,
+    handleMouseMove,
+    handleMouseUp,
+    handleDeviceWheel,
+  } = useDrag({
+    onDeviceDrag: handleDeviceDrag,
+    onImageDrag: handleImageDrag,
+    onDeviceScale: handleDeviceScale,
+    scale,
+    previewZoom,
+    isEnabled: moveMode && !isEditingText,
+  });
+
+  // 文件拖放 hook
+  const {
+    isDragOver,
+    handleDragOver,
+    handleDragLeave,
+    handleDrop,
+  } = useFileDrop(onImageDrop);
+
+  // 设备点击处理
+  const handleDeviceMouseDown = useCallback((e, deviceIndex) => {
+    const currentPos = deviceIndex === 1 
+      ? (devicePosition1 || { x: 0, y: 0 }) 
+      : (devicePosition2 || { x: 0, y: 0 });
+    
+    setActiveDevice(deviceIndex);
+    onDeviceDragStart(e, deviceIndex, currentPos);
+  }, [devicePosition1, devicePosition2, setActiveDevice, onDeviceDragStart]);
+
+  // 画布点击处理
+  const handleCanvasMouseDown = useCallback((e) => {
+    if (isEditingText || !moveMode) return;
+    
+    const currentPos = activeDevice === 1 ? position : position2;
+    // 这里可以扩展为图片拖拽
+  }, [isEditingText, moveMode, activeDevice, position, position2]);
+
+  // 滚轮处理
+  const handleWheel = useCallback((e) => {
     if (e.ctrlKey) {
-      e.preventDefault();
-      const delta = e.deltaY > 0 ? -0.1 : 0.1;
-      setPreviewZoom(prev => Math.max(0.3, Math.min(2, prev + delta)));
+      handleZoomWheel(e);
+    } else if (moveMode) {
+      // 在移动模式下，滚轮缩放当前选中的设备
+      handleDeviceWheel(e, activeDevice);
     }
-  };
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setIsDragOver(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDragOver(false);
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    const files = e.dataTransfer.files;
-    if (files.length > 0 && files[0].type.startsWith('image/')) {
-      onImageDrop?.(files[0]);
-    }
-  };
-
-  const secondImage = screenshot2 || screenshot;
-  const secondModel = model2 || model;
-
-  const getCanvasStyle = () => {
-    const baseWidth = layout === 'double' || layout === 'mixed' ? 900 : 600;
-    const baseHeight = 900;
-    
-    if (exportRatio && exportRatio.ratio) {
-      const height = baseWidth / exportRatio.ratio;
-      return {
-        minWidth: `${baseWidth}px`,
-        minHeight: `${Math.max(height, 600)}px`,
-      };
-    }
-    
-    return {
-      minWidth: `${baseWidth}px`,
-      minHeight: `${baseHeight}px`,
-    };
-  };
+  }, [handleZoomWheel, moveMode, handleDeviceWheel, activeDevice]);
 
   return (
     <div 
@@ -218,111 +175,60 @@ const PreviewArea = forwardRef(({
       )}
 
       {/* 导出画布 */}
-      <div 
+      <PreviewCanvas
         ref={ref}
-        className={`relative shadow-2xl transition-all duration-500 overflow-hidden rounded-2xl ${moveMode && isDragging ? 'cursor-grabbing' : moveMode ? 'cursor-grab' : 'cursor-default'}`}
-        style={{
-          ...getBackgroundStyle(),
-          ...getCanvasStyle(),
-          width: 'auto',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '100px',
-          perspective: `${perspective}px`,
-          transform: `scale(${previewZoom})`,
-          transformOrigin: 'center center',
-        }}
-        onMouseDown={handleMouseDown}
-      >
-        {/* 磨砂玻璃特效层 */}
-        {background.type === 'custom-glass' && (
-          <>
-            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-gray-400/10 to-gray-600/10 z-0" />
-            <div className="absolute inset-6 rounded-3xl bg-white/30 dark:bg-white/5 backdrop-blur-2xl border border-white/40 dark:border-white/10 z-0 shadow-xl" />
-          </>
-        )}
-
-        {/* 文字标注 */}
-        <TextAnnotation 
-          annotation={annotation} 
-          onChange={setAnnotation}
-          isEditing={isEditingText}
-        />
-
-        <div 
-          className={`relative z-10 flex ${layout === 'double' || layout === 'mixed' ? 'gap-16' : ''} items-center justify-center`}
-          style={{ transformStyle: 'preserve-3d' }}
-        >
-          <div 
-            className={`transition-all duration-200 ${moveMode ? 'cursor-move' : ''} ${moveMode && activeDevice === 1 ? 'ring-2 ring-foreground/50 ring-offset-4 ring-offset-transparent rounded-[44px]' : ''}`}
-            style={{ 
-              transformStyle: 'preserve-3d',
-              transform: `translateZ(${layout !== 'single' ? 20 : 0}px) translate(${devicePosition1?.x || 0}px, ${devicePosition1?.y || 0}px) scale(${deviceScale1 || 1})`
-            }}
-            onMouseDown={(e) => handleDeviceMouseDown(e, 1)}
-            onWheel={(e) => handleDeviceWheel(e, 1)}
-          >
-            <DeviceFrame 
-              model={model} 
-              color={deviceColor} 
-              image={screenshot} 
-              fitMode={fitMode}
-              scale={scale}
-              position={position}
-              hasShadow={hasShadow}
-              rotateX={rotateX}
-              rotateY={layout !== 'single' ? rotateY + 15 : rotateY}
-              isLandscape={isLandscape}
-              enableAnimation={enableAnimation}
-            />
-          </div>
-          
-          {(layout === 'double' || layout === 'mixed') && (
-            <div 
-              className={`transition-all duration-200 ${moveMode ? 'cursor-move' : ''} ${moveMode && activeDevice === 2 ? 'ring-2 ring-foreground/50 ring-offset-4 ring-offset-transparent rounded-[44px]' : ''}`}
-              style={{ 
-                transformStyle: 'preserve-3d',
-                transform: `translateZ(-20px) translate(${devicePosition2?.x || 0}px, ${devicePosition2?.y || 0}px) scale(${deviceScale2 || 1})`
-              }}
-              onMouseDown={(e) => handleDeviceMouseDown(e, 2)}
-              onWheel={(e) => handleDeviceWheel(e, 2)}
-            >
-              <DeviceFrame 
-                model={layout === 'mixed' ? 'ipad-pro-13' : secondModel} 
-                color={deviceColor} 
-                image={secondImage} 
-                fitMode={fitMode}
-                scale={scale}
-                position={position2}
-                hasShadow={hasShadow}
-                rotateX={rotateX}
-                rotateY={rotateY - 15}
-                isLandscape={layout === 'mixed' ? false : isLandscape}
-                enableAnimation={enableAnimation}
-              />
-            </div>
-          )}
-        </div>
-
-        {/* 水印 */}
-        {watermark.visible && (
-          <div 
-            className="absolute bottom-6 right-6 font-bold text-xl select-none pointer-events-none"
-            style={{ 
-              color: isDark ? `rgba(255,255,255,${watermark.opacity})` : `rgba(0,0,0,${watermark.opacity})`
-            }}
-          >
-            {watermark.text}
-          </div>
-        )}
-      </div>
+        // 背景
+        background={background}
+        customBgColor={customBgColor}
+        customBgImage={customBgImage}
+        isDark={isDark}
+        // 布局
+        layout={layout}
+        exportRatio={exportRatio}
+        // 设备配置
+        model={model}
+        deviceColor={deviceColor}
+        isLandscape={isLandscape}
+        hasShadow={hasShadow}
+        enableAnimation={enableAnimation}
+        // 3D 效果
+        rotateX={rotateX}
+        rotateY={rotateY}
+        perspective={perspective}
+        // 图片
+        screenshot={screenshot}
+        screenshot2={screenshot2}
+        fitMode={fitMode}
+        scale={scale}
+        position={position}
+        position2={position2}
+        // 设备位置缩放
+        devicePosition1={devicePosition1}
+        devicePosition2={devicePosition2}
+        deviceScale1={deviceScale1}
+        deviceScale2={deviceScale2}
+        // 文字标注
+        annotation={annotation}
+        setAnnotation={setAnnotation}
+        isEditingText={isEditingText}
+        watermark={watermark}
+        // 交互状态
+        moveMode={moveMode}
+        activeDevice={activeDevice}
+        isDragging={isDragging}
+        // 缩放
+        previewZoom={previewZoom}
+        // 事件处理
+        onDeviceMouseDown={handleDeviceMouseDown}
+        onDeviceWheel={handleDeviceWheel}
+        onCanvasMouseDown={handleCanvasMouseDown}
+      />
 
       {/* 状态提示 */}
       <div className="absolute top-5 right-5 glass px-4 py-2 rounded-xl text-xs font-medium z-20 flex items-center gap-2">
         <ZoomIn size={12} className="text-muted-foreground" />
         {moveMode && isDragging && dragType === 'device' 
-          ? `拖拽设备 ${activeDevice} · ${Math.round((activeDevice === 1 ? deviceScale1 : deviceScale2) * 100)}%` 
+          ? `拖拽设备 ${currentDevice} · ${Math.round((currentDevice === 1 ? deviceScale1 : deviceScale2) * 100)}%` 
           : moveMode 
             ? `移动模式 · 设备 ${activeDevice} · ${Math.round((activeDevice === 1 ? deviceScale1 : deviceScale2) * 100)}%` 
             : isEditingText 

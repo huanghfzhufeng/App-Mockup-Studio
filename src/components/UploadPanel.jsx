@@ -1,8 +1,8 @@
-import { useState } from 'react';
 import {
-  Upload, Image as ImageIcon, RotateCcw, Move, Zap, Download, Ratio
+  Upload, Image as ImageIcon, RotateCcw, Move, Zap, Ratio
 } from 'lucide-react';
 import { EXPORT_RATIOS } from '../config/constants';
+import { useAppStore } from '../store/useAppStore';
 
 function SmallButton({ active, children, onClick, className = '' }) {
   return (
@@ -23,35 +23,42 @@ function SmallButton({ active, children, onClick, className = '' }) {
 }
 
 export default function UploadPanel({
-  screenshot,
-  screenshot2,
   onImageUpload,
   onImageUpload2,
-  layout,
-  fitMode,
-  setFitMode,
-  scale,
-  setScale,
-  position,
-  setPosition,
-  position2,
-  setPosition2,
-  moveMode,
-  setMoveMode,
-  activeDevice,
-  setActiveDevice,
-  deviceScale1,
-  setDeviceScale1,
-  deviceScale2,
-  setDeviceScale2,
-  exportRes,
-  setExportRes,
-  exportRatio,
-  setExportRatio,
   onExport,
   onBatchExport,
   isExporting
 }) {
+  // 从 store 获取状态
+  const {
+    screenshot,
+    screenshot2,
+    layout,
+    fitMode,
+    setFitMode,
+    scale,
+    setScale,
+    position,
+    setPosition,
+    position2,
+    setPosition2,
+    moveMode,
+    setMoveMode,
+    activeDevice,
+    setActiveDevice,
+    deviceScale1,
+    setDeviceScale1,
+    deviceScale2,
+    setDeviceScale2,
+    exportRes,
+    setExportRes,
+    exportRatio,
+    setExportRatio,
+  } = useAppStore();
+
+  const currentPos = activeDevice === 1 ? position : position2;
+  const setCurrentPos = activeDevice === 1 ? setPosition : setPosition2;
+
   return (
     <div className="w-full md:w-[320px] border-l border-border/50 h-auto md:h-screen overflow-y-auto flex-shrink-0 z-20 bg-sidebar scrollbar-thin">
       {/* 头部 */}
@@ -189,31 +196,27 @@ export default function UploadPanel({
             </div>
           )}
           
-          {moveMode && (() => {
-            const currentPos = activeDevice === 1 ? position : position2;
-            const setCurrentPos = activeDevice === 1 ? setPosition : setPosition2;
-            return (
-              <div className="space-y-3">
-                <div>
-                  <div className="flex justify-between text-xs mb-1.5">
-                    <span className="text-muted-foreground">X 偏移</span>
-                    <span className="font-mono text-foreground">{currentPos.x}px</span>
-                  </div>
-                  <input type="range" min="-150" max="150" step="1" value={currentPos.x} onChange={(e) => setCurrentPos({...currentPos, x: parseInt(e.target.value)})} className="w-full" />
+          {moveMode && (
+            <div className="space-y-3">
+              <div>
+                <div className="flex justify-between text-xs mb-1.5">
+                  <span className="text-muted-foreground">X 偏移</span>
+                  <span className="font-mono text-foreground">{currentPos.x}px</span>
                 </div>
-                <div>
-                  <div className="flex justify-between text-xs mb-1.5">
-                    <span className="text-muted-foreground">Y 偏移</span>
-                    <span className="font-mono text-foreground">{currentPos.y}px</span>
-                  </div>
-                  <input type="range" min="-150" max="150" step="1" value={currentPos.y} onChange={(e) => setCurrentPos({...currentPos, y: parseInt(e.target.value)})} className="w-full" />
-                </div>
-                <button onClick={() => setCurrentPos({ x: 0, y: 0 })} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
-                  <RotateCcw size={10} /> 重置位置
-                </button>
+                <input type="range" min="-150" max="150" step="1" value={currentPos.x} onChange={(e) => setCurrentPos({...currentPos, x: parseInt(e.target.value)})} className="w-full" />
               </div>
-            );
-          })()}
+              <div>
+                <div className="flex justify-between text-xs mb-1.5">
+                  <span className="text-muted-foreground">Y 偏移</span>
+                  <span className="font-mono text-foreground">{currentPos.y}px</span>
+                </div>
+                <input type="range" min="-150" max="150" step="1" value={currentPos.y} onChange={(e) => setCurrentPos({...currentPos, y: parseInt(e.target.value)})} className="w-full" />
+              </div>
+              <button onClick={() => setCurrentPos({ x: 0, y: 0 })} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
+                <RotateCcw size={10} /> 重置位置
+              </button>
+            </div>
+          )}
         </div>
 
         {/* 导出 */}

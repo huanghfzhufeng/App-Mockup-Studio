@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Smartphone, Layout, Palette, Box, RotateCcw, Type, Save, Layers, 
   Moon, Sun, RotateCw, Sparkles, ImagePlus, ChevronDown
 } from 'lucide-react';
 import { BACKGROUNDS, DEVICE_MODELS, PRESET_ANGLES, FONT_STYLES, LAYOUT_MODES } from '../config/constants';
+import { useAppStore } from '../store/useAppStore';
 
 // 可折叠区块组件
 function Section({ title, icon: Icon, children, defaultOpen = true, badge }) {
@@ -60,70 +61,71 @@ function SmallButton({ active, children, onClick, className = '' }) {
 
 export default function ControlPanel({
   onBgImageUpload,
-  model,
-  setModel,
-  deviceColor,
-  setDeviceColor,
-  background,
-  setBackground,
-  customBgColor,
-  setCustomBgColor,
-  customBgImage,
-  layout,
-  setLayout,
-  hasShadow,
-  setHasShadow,
-  rotateX,
-  setRotateX,
-  rotateY,
-  setRotateY,
-  perspective,
-  setPerspective,
-  annotation,
-  setAnnotation,
-  isEditingText,
-  setIsEditingText,
   templates,
   onSaveTemplate,
   onApplyTemplate,
   onDeleteTemplate,
-  isLandscape,
-  setIsLandscape,
-  enableAnimation,
-  setEnableAnimation,
-  watermark,
-  setWatermark,
-  isDark,
-  toggleDark,
-  onReset,
-  canUndo,
-  canRedo,
-  onUndo,
-  onRedo
 }) {
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState('');
 
-  const groupedModels = Object.entries(DEVICE_MODELS).reduce((acc, [key, config]) => {
-    const brand = config.brand || 'other';
-    if (!acc[brand]) acc[brand] = [];
-    acc[brand].push({ key, ...config });
-    return acc;
-  }, {});
+  // 从 store 获取状态
+  const {
+    model,
+    setModel,
+    deviceColor,
+    setDeviceColor,
+    background,
+    setBackground,
+    customBgColor,
+    setCustomBgColor,
+    customBgImage,
+    layout,
+    setLayout,
+    hasShadow,
+    setHasShadow,
+    rotateX,
+    setRotateX,
+    rotateY,
+    setRotateY,
+    perspective,
+    setPerspective,
+    applyPreset,
+    annotation,
+    updateAnnotation,
+    isEditingText,
+    setIsEditingText,
+    isLandscape,
+    setIsLandscape,
+    enableAnimation,
+    setEnableAnimation,
+    watermark,
+    setWatermark,
+    isDark,
+    toggleDark,
+    resetAll,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    saveHistory,
+  } = useAppStore();
+
+  // 缓存分组后的机型
+  const groupedModels = useMemo(() => {
+    return Object.entries(DEVICE_MODELS).reduce((acc, [key, config]) => {
+      const brand = config.brand || 'other';
+      if (!acc[brand]) acc[brand] = [];
+      acc[brand].push({ key, ...config });
+      return acc;
+    }, {});
+  }, []);
 
   const brandNames = { apple: 'Apple', google: 'Pixel', samsung: 'Samsung' };
 
-  const applyPreset = (preset) => {
-    setRotateX(preset.rotateX);
-    setRotateY(preset.rotateY);
-    setPerspective(preset.perspective);
-  };
-
-  const updateAnnotation = (type, field, value) => {
-    setAnnotation({
-      ...annotation,
-      [type]: { ...annotation[type], [field]: value }
-    });
+  const handleApplyPreset = (preset) => {
+    saveHistory();
+    applyPreset(preset);
   };
 
   const handleSaveTemplate = () => {
@@ -131,6 +133,18 @@ export default function ControlPanel({
     onSaveTemplate(newTemplateName.trim());
     setNewTemplateName('');
     setShowTemplateModal(false);
+  };
+
+  const handleReset = () => {
+    if (confirm('确定要重置所有设置吗？')) {
+      resetAll();
+    }
+  };
+
+  // 带历史记录的 setter
+  const withHistory = (setter) => (value) => {
+    saveHistory();
+    setter(value);
   };
 
   return (
@@ -151,7 +165,7 @@ export default function ControlPanel({
               {isDark ? <Sun size={14} /> : <Moon size={14} />}
             </button>
             <button 
-              onClick={onReset} 
+              onClick={handleReset} 
               className="w-8 h-8 rounded-lg bg-secondary hover:bg-accent flex items-center justify-center transition-all duration-200 btn-press" 
               title="重置所有设置"
             >
@@ -163,15 +177,15 @@ export default function ControlPanel({
         {/* 撤销/重做 */}
         <div className="flex gap-2">
           <button 
-            onClick={onUndo} 
-            disabled={!canUndo}
+            onClick={undo} 
+            disabled={!canUndo()}
             className="flex-1 h-8 text-xs font-medium rounded-lg bg-secondary hover:bg-accent border border-border/50 transition-all duration-200 disabled:opacity-30 disabled:pointer-events-none btn-press"
           >
             ↶ 撤销
           </button>
           <button 
-            onClick={onRedo}
-            disabled={!canRedo}
+            onClick={redo}
+            disabled={!canRedo()}
             className="flex-1 h-8 text-xs font-medium rounded-lg bg-secondary hover:bg-accent border border-border/50 transition-all duration-200 disabled:opacity-30 disabled:pointer-events-none btn-press"
           >
             重做 ↷
@@ -234,7 +248,7 @@ export default function ControlPanel({
                 {models.map(({ key, name }) => (
                   <button 
                     key={key} 
-                    onClick={() => { setModel(key); setDeviceColor(Object.keys(DEVICE_MODELS[key].frameColor)[0]); }}
+                    onClick={() => { saveHistory(); setModel(key); }}
                     className={`
                       text-xs h-8 px-2 rounded-lg truncate transition-all duration-200 btn-press font-medium
                       ${model === key 
@@ -254,7 +268,7 @@ export default function ControlPanel({
             {Object.keys(DEVICE_MODELS[model].frameColor).map((colorKey) => (
               <button 
                 key={colorKey} 
-                onClick={() => setDeviceColor(colorKey)}
+                onClick={() => { saveHistory(); setDeviceColor(colorKey); }}
                 className={`
                   w-7 h-7 rounded-full transition-all duration-200 btn-press
                   ${deviceColor === colorKey ? 'ring-2 ring-foreground ring-offset-2 ring-offset-background scale-110' : 'hover:scale-105'}
@@ -273,7 +287,7 @@ export default function ControlPanel({
               <SmallButton 
                 key={mode.id} 
                 active={layout === mode.id}
-                onClick={() => setLayout(mode.id)}
+                onClick={() => withHistory(setLayout)(mode.id)}
                 className="flex-1"
               >
                 {mode.icon} {mode.name}
@@ -282,11 +296,11 @@ export default function ControlPanel({
           </div>
           <div className="flex flex-wrap gap-x-4 gap-y-2 pt-3">
             <label className="flex items-center gap-2 text-xs cursor-pointer text-foreground">
-              <input type="checkbox" checked={hasShadow} onChange={(e) => setHasShadow(e.target.checked)} />
+              <input type="checkbox" checked={hasShadow} onChange={(e) => withHistory(setHasShadow)(e.target.checked)} />
               <span>投影</span>
             </label>
             <label className="flex items-center gap-2 text-xs cursor-pointer text-foreground">
-              <input type="checkbox" checked={isLandscape} onChange={(e) => setIsLandscape(e.target.checked)} />
+              <input type="checkbox" checked={isLandscape} onChange={(e) => withHistory(setIsLandscape)(e.target.checked)} />
               <RotateCw size={10} className="text-muted-foreground" />
               <span>横屏</span>
             </label>
@@ -304,7 +318,7 @@ export default function ControlPanel({
             {PRESET_ANGLES.map(preset => (
               <button 
                 key={preset.id} 
-                onClick={() => applyPreset(preset)}
+                onClick={() => handleApplyPreset(preset)}
                 className="flex flex-col items-center p-1.5 rounded-lg bg-secondary hover:bg-accent border border-border/50 hover:border-foreground/20 transition-all duration-200 btn-press group" 
                 title={preset.name}
               >
