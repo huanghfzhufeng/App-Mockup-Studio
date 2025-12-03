@@ -4,6 +4,7 @@ import PreviewArea from './components/PreviewArea';
 import UploadPanel from './components/UploadPanel';
 import { useExport } from './hooks/useExport';
 import { useTemplates } from './hooks/useTemplates';
+import { useImageUpload, readImageFile } from './hooks/useImageUpload';
 import { useAppStore } from './store/useAppStore';
 import { EXPORT_RATIOS } from './config/constants';
 
@@ -48,39 +49,14 @@ export default function App() {
     setIsLandscape,
   } = useAppStore();
 
-  // 图片上传处理
-  const handleImageUpload = useCallback((e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => setScreenshot(event.target.result);
-      reader.readAsDataURL(file);
-    }
-  }, [setScreenshot]);
-
-  const handleImageUpload2 = useCallback((e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => setScreenshot2(event.target.result);
-      reader.readAsDataURL(file);
-    }
-  }, [setScreenshot2]);
-
-  const handleBgImageUpload = useCallback((e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => setCustomBgImage(event.target.result);
-      reader.readAsDataURL(file);
-    }
-  }, [setCustomBgImage]);
+  // 图片上传处理 - 使用统一的 hook
+  const handleImageUpload = useImageUpload(setScreenshot);
+  const handleImageUpload2 = useImageUpload(setScreenshot2);
+  const handleBgImageUpload = useImageUpload(setCustomBgImage);
 
   // 拖拽上传
   const handleImageDrop = useCallback((file) => {
-    const reader = new FileReader();
-    reader.onload = (event) => setScreenshot(event.target.result);
-    reader.readAsDataURL(file);
+    readImageFile(file, setScreenshot);
   }, [setScreenshot]);
 
   // 导出

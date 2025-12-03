@@ -3,24 +3,7 @@ import {
 } from 'lucide-react';
 import { EXPORT_RATIOS } from '../config/constants';
 import { useAppStore } from '../store/useAppStore';
-
-function SmallButton({ active, children, onClick, className = '' }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`
-        h-8 px-3 text-xs font-medium rounded-lg transition-all duration-200 btn-press
-        ${active 
-          ? 'bg-foreground text-background shadow-md' 
-          : 'bg-secondary hover:bg-accent text-foreground border border-border/50 hover:border-border'
-        }
-        ${className}
-      `}
-    >
-      {children}
-    </button>
-  );
-}
+import SmallButton from './ui/SmallButton';
 
 export default function UploadPanel({
   onImageUpload,

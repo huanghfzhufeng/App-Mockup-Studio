@@ -1,15 +1,5 @@
 import html2canvas from 'html2canvas';
 
-// 导出比例配置
-export const EXPORT_RATIOS = [
-  { id: 'auto', name: '自适应', ratio: null },
-  { id: '1:1', name: '1:1', ratio: 1 },
-  { id: '3:4', name: '3:4', ratio: 3/4 },
-  { id: '4:3', name: '4:3', ratio: 4/3 },
-  { id: '9:16', name: '9:16', ratio: 9/16 },
-  { id: '16:9', name: '16:9', ratio: 16/9 },
-];
-
 export function useExport() {
   const exportImage = async (elementRef, scale = 2, ratio = null) => {
     if (!elementRef.current) return false;
